@@ -1,0 +1,8 @@
+{
+  "name": "@reactive-drag/shared",
+  "type": "module",
+  "version": "0.0.1",
+  "dependencies": {
+    "vue": ">=3.2"
+  }
+}
