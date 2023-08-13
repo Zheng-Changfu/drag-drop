@@ -9,6 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@reactive-drag/core": "workspace:*",
+    "@reactive-drag/plugin-store": "workspace:*",
+    "@reactive-drag/shared": "workspace:*",
     "vue": "^3.3.4"
   },
   "devDependencies": {

@@ -1,25 +1,37 @@
 <script setup lang="ts">
+import { createReactiveDrag } from '@reactive-drag/core'
+import { ref } from 'vue'
+
+const draggableTargetRef = ref<HTMLElement>()
+const dropableTargetRef = ref<HTMLElement>()
+
+const [useDraggable, useDropable] = createReactiveDrag()
+useDraggable({ proxyTarget: draggableTargetRef })
+useDropable({ proxyTarget: dropableTargetRef })
 </script>
 
 <template>
   <div>
-    123
+    <div ref="draggableTargetRef" class="draggable" />
+    <div ref="dropableTargetRef" class="dropable" />
   </div>
 </template>
 
 <style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+div {
+  display: flex;
 }
 
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+.draggable {
+  width: 300px;
+  height: 300px;
+  background-color: red;
 }
 
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+.dropable {
+  margin-left: 300px;
+  width: 300px;
+  height: 300px;
+  background-color: skyblue;
 }
 </style>

@@ -16,7 +16,14 @@
     "types": [
       "vite/client"
     ],
-    "paths": {}
+    "paths": {
+      "@reactive-drag/core": [
+        "./packages/core/index.ts"
+      ],
+      "@reactive-drag/shared": [
+        "./packages/shared/index.ts"
+      ]
+    }
   },
   "include": [
     "src/**/*.ts",
