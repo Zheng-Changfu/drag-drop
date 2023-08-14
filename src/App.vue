@@ -1,37 +1,27 @@
 <script setup lang="ts">
-import { createReactiveDrag } from '@reactive-drag/core'
-import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { routes } from './routes'
 
-const draggableTargetRef = ref<HTMLElement>()
-const dropableTargetRef = ref<HTMLElement>()
+const tabs = routes?.slice(1)
+const router = useRouter()
 
-const [useDraggable, useDropable] = createReactiveDrag()
-useDraggable({ proxyTarget: draggableTargetRef })
-useDropable({ proxyTarget: dropableTargetRef })
+function handleJumpDemo(path: string) {
+  router.push(path)
+}
 </script>
 
 <template>
-  <div>
-    <div ref="draggableTargetRef" class="draggable" />
-    <div ref="dropableTargetRef" class="dropable" />
+  <div class="demos">
+    <div v-for="(item, index) in tabs" :key="index" @click="handleJumpDemo(item.path)">
+      {{ item.meta.desc }}
+    </div>
   </div>
+  <RouterView />
 </template>
 
 <style scoped>
-div {
+.demos {
   display: flex;
-}
-
-.draggable {
-  width: 300px;
-  height: 300px;
-  background-color: red;
-}
-
-.dropable {
-  margin-left: 300px;
-  width: 300px;
-  height: 300px;
-  background-color: skyblue;
+  gap: 10px;
 }
 </style>
