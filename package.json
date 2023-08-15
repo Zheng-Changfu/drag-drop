@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "@reactive-drag/core": "workspace:*",
-    "@reactive-drag/plugin-store": "workspace:*",
+    "@reactive-drag/mouse-follow-plugin": "workspace:*",
+    "@reactive-drag/outline-plugin": "workspace:*",
     "@reactive-drag/shared": "workspace:*",
     "@vueuse/core": "^10.3.0",
     "vue": "^3.3.4",

@@ -11,7 +11,6 @@ const context = useReactionDrag({
 })
 
 function MouseFollowPlugin(context: UseReactionDragContext) {
-  const isDraggingRef = ref(false)
   const textRef = ref('')
   const positionRef = ref<{ x: number; y: number }>({ x: 0, y: 0 })
 
@@ -21,7 +20,6 @@ function MouseFollowPlugin(context: UseReactionDragContext) {
   })
 
   context.onDragging((event) => {
-    isDraggingRef.value = true
     positionRef.value.x = event.clientX
     positionRef.value.y = event.clientY
   })

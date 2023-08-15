@@ -31,5 +31,11 @@ export const routes = [
       desc: '给元素画边框',
     },
   },
-
+  {
+    path: '/demo5',
+    component: () => import('./demos/mouseFollow/index.vue'),
+    meta: {
+      desc: 'MouseFollow',
+    },
+  },
 ]

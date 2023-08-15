@@ -22,6 +22,12 @@
       ],
       "@reactive-drag/shared": [
         "./packages/shared/index.ts"
+      ],
+      "@reactive-drag/mouse-follow-plugin": [
+        "./packages/plugins/mouseFollow/index.tsx"
+      ],
+      "@reactive-drag/outline-plugin": [
+        "./packages/plugins/outline/index.tsx"
       ]
     }
   },

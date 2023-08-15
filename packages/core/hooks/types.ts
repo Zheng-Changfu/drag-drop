@@ -7,9 +7,8 @@ export interface UseReactionDragContext {
   onMove: EventHookOn<MouseEvent>
   onEnd: EventHookOn<MouseEvent>
   onDragging: EventHookOn<MouseEvent>
-  getCanDraggable: () => boolean
+  getCanDraggable: (event: MouseEvent) => boolean
   isDragging: () => boolean
-  getCanDropable: () => boolean
   use: (plugin: Plugin) => ({ pause: () => void; resume: () => void })
   useDragElement: () => Ref<HTMLElement | undefined>
 }

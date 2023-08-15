@@ -9,48 +9,30 @@ import { useDragElement } from './useDragElement'
 interface UseReactionDragOptions {
   proxyTarget?: MaybeRefOrGetter<HTMLElement | null | undefined | Document>
   canDraggable?: boolean | ((element: HTMLElement, event: MouseEvent) => boolean)
-  canDropable?: boolean | ((element: HTMLElement, event: MouseEvent) => boolean)
 }
 export function useReactionDrag(options: UseReactionDragOptions = {}) {
   const {
     proxyTarget = document,
     canDraggable = true,
-    canDropable = true,
   } = options
 
-  let _event: MouseEvent | undefined
   const isDraggingRef = ref(false)
   const { use } = usePluginContext()
   const { startEventHook, moveEventHook, endEventHook, draggingEventHook } = useEventHook()
 
-  function getCanDraggable() {
-    if (!_event) return false
-    const target = _event?.target as HTMLElement
+  function getCanDraggable(event: MouseEvent) {
+    const target = event.target as HTMLElement
     if (isBool(canDraggable) && canDraggable === false) {
       return false
     }
-    if (isFunc(canDraggable) && canDraggable(target, _event) === false) {
-      return false
-    }
-    return true
-  }
-
-  function getCanDropable() {
-    if (!_event) return false
-    const target = _event?.target as HTMLElement
-    if (isBool(canDropable) && canDropable === false) {
-      return false
-    }
-    if (isFunc(canDropable) && canDropable(target, _event) === false) {
+    if (isFunc(canDraggable) && canDraggable(target, event) === false) {
       return false
     }
     return true
   }
 
   function handleMouseDown(event: MouseEvent) {
-    _event = event
-
-    if (!getCanDraggable()) {
+    if (!getCanDraggable(event)) {
       isDraggingRef.value = false
       return
     }
@@ -61,25 +43,16 @@ export function useReactionDrag(options: UseReactionDragOptions = {}) {
   }
 
   function handleMouseMove(event: MouseEvent) {
-    _event = event
     if (!unref(isDraggingRef)) return
     moveEventHook.trigger(event)
     draggingEventHook.trigger(event)
   }
 
   function handleMouseUp(event: MouseEvent) {
-    _event = event
-
     if (!unref(isDraggingRef)) return
-    if (!getCanDropable()) {
-      isDraggingRef.value = false
-      return
-    }
-
     draggingEventHook.trigger(event)
     isDraggingRef.value = false
     endEventHook.trigger(event)
-    _event = undefined
   }
 
   useEventListener(proxyTarget, 'mousedown', handleMouseDown)
@@ -93,7 +66,6 @@ export function useReactionDrag(options: UseReactionDragOptions = {}) {
     onDragging: draggingEventHook.on,
     isDragging: () => unref(isDraggingRef),
     getCanDraggable,
-    getCanDropable,
     use(plugin: Plugin) {
       return use(plugin, context) as any
     },
