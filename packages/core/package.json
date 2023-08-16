@@ -1,5 +1,5 @@
 {
-  "name": "@reactive-drag/core",
+  "name": "@drag-drop/core",
   "type": "module",
   "version": "0.0.1",
   "dependencies": {

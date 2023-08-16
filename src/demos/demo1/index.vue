@@ -1,41 +1,19 @@
 <script setup lang="ts">
-import { useReactionDrag } from '@reactive-drag/core'
-import type { UseReactionDragContext } from '@reactive-drag/core'
-import { useActiveElement } from '@reactive-drag/shared'
-import { watch } from 'vue'
-import { useDraggable } from '@vueuse/core'
+import { useDragDrop } from '@drag-drop/core'
 
-function canDraggable(element: HTMLElement) {
-  return element.className.startsWith('draggable-')
-}
+const context = useDragDrop({
 
-const context = useReactionDrag()
+})
+const dragging = context.useDragging()
+const { event, element, onStart } = context.useMouseDown()
 
-function draggablePlugin(context: UseReactionDragContext) {
-  const activeElementRef = useActiveElement({ trigger: 'hover' })
-
-  const { x, y } = useDraggable(activeElementRef)
-
-  watch([x, y], () => {
-    if (activeElementRef.value && canDraggable(activeElementRef.value)) {
-      activeElementRef.value.style.position = 'fixed'
-      activeElementRef.value.style.left = `${x.value}px`
-      activeElementRef.value.style.top = `${y.value}px`
-    }
-  })
-}
-
-context.use(draggablePlugin)
-const id = 0
+onStart(() => {
+  console.log(333)
+})
 </script>
 
 <template>
-  <div
-    v-for="item in 3"
-    :key="String(++id)"
-    :class="[`draggable-${item}`]"
-    :style="{ width: '100px', height: '100px', border: '1px solid #ccc', margin: '10px' }"
-  >
-    {{ item }}
-  </div>
+  <h1>dragging:{{ dragging }}</h1>
+  <h1>dragging:{{ event }}</h1>
+  <h1>dragging:{{ element }}</h1>
 </template>

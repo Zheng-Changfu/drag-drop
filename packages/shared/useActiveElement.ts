@@ -1,4 +1,4 @@
-import { useEventListener } from '@reactive-drag/shared'
+import { useEventListener } from '@drag-drop/shared'
 import type { MaybeRefOrGetter } from 'vue'
 import { ref } from 'vue'
 

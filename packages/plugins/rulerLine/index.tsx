@@ -1,13 +1,29 @@
 import type { UseReactionDragContext } from '@reactive-drag/core'
-import type { CSSProperties, MaybeRefOrGetter } from 'vue'
+import { type CSSProperties, type MaybeRefOrGetter } from 'vue'
 import { getGridTemplateColumns, isBlockLayout, isFlexLayout, isFlexRowLayout, isGridLayout, isTableLayout, isWidthFull } from './utils'
 
-interface RulerLinePluginOptions {
-  style?: MaybeRefOrGetter<CSSProperties>
-  rulerSize?: number
-  thresholdSize?: number
-  startDetect?: boolean | ((element: HTMLElement) => boolean)
-  onDetectLayout?: (element: HTMLElement, parentElement: HTMLElement) => `${DirectionEnum}`
+type Nullable<T> = T | null
+
+interface AnchorElements {
+  target: Nullable<HTMLElement>
+  beforeMouseElement: Nullable<HTMLElement>
+  afterMouseElement: Nullable<HTMLElement>
+}
+
+// 数据
+// 数据获取元素的方法
+// 数据获取父数据的方法
+// event获取元素的方法
+
+interface RulerLinePluginOptions<T> {
+  data: T[] // 数据源
+  childrenField?: string // 子节点的字段,支持 a.b.c 形式,默认 "children"
+  getElementByEvent: (event: MouseEvent) => Nullable<HTMLElement> // 根据 event 获取元素的方法
+  getParentByDataItem: (item: T) => Nullable<HTMLElement> // 根据数据获取父数据的方法
+  getElementByDataItem: (item: T) => Nullable<HTMLElement> // 根据数据获取元素的方法
+  style?: MaybeRefOrGetter<CSSProperties> // 标尺线样式
+  rulerSize?: number // 标尺线大小
+  thresholdSize?: number // 阈值大小
 }
 
 export enum DirectionEnum {
@@ -20,19 +36,21 @@ export enum DirectionEnum {
 
 export enum LayoutEnum {
   VERTICAL = 'VERTICAL',
-  HORIZONTAL = 'Horizontal',
+  HORIZONTAL = 'HORIZONTAL',
 }
 
-export function rulerLinePlugin(options: RulerLinePluginOptions) {
+export function rulerLinePlugin<T extends MaybeRefOrGetter<object>>(options: RulerLinePluginOptions<T>) {
   return function (dragContext: UseReactionDragContext) {
-    const { style = {}, rulerSize = 2, thresholdSize = 8, startDetect = true, onDetectLayout } = options
+    const {
+      data,
+      style = {},
+      rulerSize = 2,
+      thresholdSize = 8,
+      getElementByEvent,
+      getParentByDataItem,
+      getElementByDataItem,
+    } = options
     const { onDragging } = dragContext
-
-    /**
-     * 1. 获取当前点位符合要求的元素
-     * 2. 获取到该元素在父元素上的布局
-     * 3.
-     */
 
     function detectLayout(element: HTMLElement): `${LayoutEnum}` {
       const parentElement = element.parentElement!
@@ -55,8 +73,20 @@ export function rulerLinePlugin(options: RulerLinePluginOptions) {
       return LayoutEnum.HORIZONTAL
     }
 
-    onDragging((event) => {
+    function getMouseBeforeElement() {
 
+    }
+
+    function getMouseAfterElement() {
+
+    }
+
+    function getXDirection() {}
+
+    function getYDirection() {}
+
+    onDragging((event) => {
+      const element = getElementByEvent(event)
     })
 
     return () => {

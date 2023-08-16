@@ -1,13 +1,15 @@
 import { effectScope, onScopeDispose } from 'vue'
 
-export function createGlobalState<T extends (...args: any[]) => any>(stateFactory: T) {
+type AnyFn = (...args: any[]) => any
+
+export function createGlobalState<Fn extends AnyFn>(stateFactory: Fn): Fn {
   const scope = effectScope(true)
   let initialized = false
   let state: any
 
   onScopeDispose(scope.stop)
 
-  return (...args: any[]) => {
+  return ((...args: any[]) => {
     if (initialized) {
       // 初始化过了
       return state
@@ -15,6 +17,6 @@ export function createGlobalState<T extends (...args: any[]) => any>(stateFactor
 
     state = scope.run(() => stateFactory(...args))
     initialized = true
-  }
+    return state
+  }) as Fn
 }
-export type CreateGlobalStateReturn = ReturnType<typeof createGlobalState>

@@ -1,5 +1,5 @@
 {
-  "name": "@reactive-drag/shared",
+  "name": "@drag-drop/shared",
   "type": "module",
   "version": "0.0.1",
   "dependencies": {
