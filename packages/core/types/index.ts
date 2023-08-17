@@ -23,19 +23,19 @@ export interface MouseEventParams {
   inIframe: boolean
 }
 
-export interface UseReturn<ExposedData = {}> {
+export interface UseReturn<T extends DragDropPluginCtx['expose']> {
   pause: () => void
   resume: () => void
   use: UseDragDropContext['use']
-  exposed: ExposedData
+  exposed: Parameters<T>['0']
 }
 
 export interface EventReturn {
   off: () => void
 }
 
-export interface UseDragDropContext<ExposedData = {}> {
-  use: (plugin: DragDropPlugin) => UseReturn<ExposedData>
+export interface UseDragDropContext {
+  use: <T extends DragDropPlugin>(plugin: T) => UseReturn<Parameters<T>['0']['expose']>
   useDragging: () => Ref<boolean>
   useCanDropable: () => Ref<boolean>
   useCanDraggable: () => Ref<boolean>
@@ -45,4 +45,9 @@ export interface UseDragDropContext<ExposedData = {}> {
   onDragging: (fn: (params: MouseEventParams) => void) => EventReturn
 }
 
-export type DragDropPlugin<T extends Record<string, any> = {}> = (context: UseDragDropContext, { expose }: { expose: T }) => any
+export interface DragDropPluginCtx {
+  context: UseDragDropContext
+  expose: <T = {}>(data: T) => void
+}
+
+export type DragDropPlugin = (ctx: DragDropPluginCtx) => any

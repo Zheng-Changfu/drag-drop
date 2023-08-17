@@ -1,5 +1,4 @@
 <script setup lang="tsx">
-import type { UseDragDropContext } from '@drag-drop/core'
 import { useDragDrop } from '@drag-drop/core'
 import { ref } from 'vue'
 
@@ -7,23 +6,25 @@ const iframeRef = ref<HTMLIFrameElement>()
 const context = useDragDrop({ frames: [iframeRef] })
 const isDragging = context.useDragging()
 
-function testPlugin() {
-  return function (context: UseDragDropContext, { expose }: any) {
-    console.log(context, expose, '@')
-
-    context.onDragging(() => {
-      console.log(33333)
-    })
-    return () => {
-      return <h1>123</h1>
-    }
+const { pause, resume, exposed } = context.use(({ context, expose }) => {
+  expose({ a: 1, b: 2 })
+  context.onDragging(() => {
+    console.log(33333)
+  })
+  return () => {
+    return <h1>123</h1>
   }
-}
+})
 
-const pluginScope = context.use(testPlugin())
+console.log(exposed)
 
 setTimeout(() => {
-  pluginScope.pause()
+  console.log('stop')
+  pause()
+  setTimeout(() => {
+    console.log('resume')
+    resume()
+  }, 2000)
 }, 3000)
 // onMounted(() => {
 //   const doc = iframeRef.value?.contentDocument

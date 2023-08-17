@@ -63,7 +63,7 @@ export class PluginScope {
           onDragging,
         }
 
-        const render = this.plugin(ctx, { expose: this.expose.bind(this) })
+        const render = this.plugin({ context: ctx, expose: this.expose.bind(this) })
 
         const _render = isFunc(render) ? render : noop
 
@@ -105,6 +105,7 @@ function createPluginRootElement() {
   })
   render(vnode, document.body)
   pluginRootEl = vnode.el as any
+  console.log(pluginRootEl)
   return pluginRootEl
 }
 
