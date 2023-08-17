@@ -1,19 +1,39 @@
-<script setup lang="ts">
+<script setup lang="tsx">
+import type { UseDragDropContext } from '@drag-drop/core'
 import { useDragDrop } from '@drag-drop/core'
+import { ref } from 'vue'
 
-const context = useDragDrop({
+const iframeRef = ref<HTMLIFrameElement>()
+const context = useDragDrop({ frames: [iframeRef] })
+const isDragging = context.useDragging()
 
-})
-const dragging = context.useDragging()
-const { event, element, onStart } = context.useMouseDown()
+function testPlugin() {
+  return function (context: UseDragDropContext, { expose }: any) {
+    console.log(context, expose, '@')
 
-onStart(() => {
-  console.log(333)
-})
+    context.onDragging(() => {
+      console.log(33333)
+    })
+    return () => {
+      return <h1>123</h1>
+    }
+  }
+}
+
+const pluginScope = context.use(testPlugin())
+
+setTimeout(() => {
+  pluginScope.pause()
+}, 3000)
+// onMounted(() => {
+//   const doc = iframeRef.value?.contentDocument
+//   if (doc) {
+//     render(h(FrameComponent), doc.body)
+//   }
+// })
 </script>
 
 <template>
-  <h1>dragging:{{ dragging }}</h1>
-  <h1>dragging:{{ event }}</h1>
-  <h1>dragging:{{ element }}</h1>
+  <h1>dragging:{{ isDragging }}</h1>
+  <!-- <iframe ref="iframeRef" width="500" height="500" /> -->
 </template>

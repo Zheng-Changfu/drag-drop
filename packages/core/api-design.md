@@ -13,7 +13,7 @@ const canDraggable = context.useCanDraggable()
 
 /**
  *  应用插件,插件是一个函数
- *  destory:卸载插件(因为瓜姐开发 canDrop 的时候颜色有冲突)
+ *  destory:卸载插件(因为瓜姐开发 canDrop 的时候)
  *  mount:挂载插件
  *  exposed:插件暴露的数据
  */

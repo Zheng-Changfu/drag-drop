@@ -1,76 +1,141 @@
+import { type MaybeRefOrGetter, onScopeDispose, ref, toValue, unref, watch } from 'vue'
 import type { AnyFn } from '@drag-drop/shared'
-import { isBool, isFunc } from '@drag-drop/shared'
-import { unref } from 'vue'
-import type { UseDragOptions } from '../types'
-import { useMouseDown } from './useMouseDown'
-import { useCanDraggable } from './useCanDraggable'
-import { useCanDropable } from './useCanDropable'
-import { useDragging } from './useDragging'
+import { createEventHook, isBool, isFunc, isIframeTag, noop, useEventListener } from '@drag-drop/shared'
+import type { DragDropPlugin, EnhancedMouseEvent, MouseEventParams, NullUndefinedAble, UseDragDropContext } from '../types'
+import { castEnhancedMouseEvent } from '../helpers/castEnhancedMouseEvent'
+import { use } from '../helpers/plugin'
 
-export function useDragDrop(options: UseDragOptions = {}) {
-  const { isDragging, setDragging } = useDragging()
-  const { onStart, element, event } = useMouseDown({ isDragging })
-  // const {} = useMouseMove()
-  // const {} = useMouseUp()
-  const { canDropable: _canDropable, setCanDropable } = useCanDropable()
-  const { canDraggable: _canDraggable, setCanDraggable } = useCanDraggable()
-  const { canDraggable = true, canDropable = true } = options
+interface UseDragDropOptions {
+  frames?: Array<MaybeRefOrGetter<HTMLIFrameElement | undefined>>
+  canDropable?: boolean | ((element: NullUndefinedAble<HTMLElement>, event: EnhancedMouseEvent) => boolean)
+  canDraggable?: boolean | ((element: NullUndefinedAble<HTMLElement>, event: EnhancedMouseEvent) => boolean)
+}
+export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContext {
+  const {
+    frames,
+    canDropable,
+    canDraggable,
+  } = options
+  const isDraggingRef = ref(false)
+  const canDraggableRef = ref(true)
+  const canDropableRef = ref(true)
+  const { on: onStart, trigger: dispatchStartEvent } = createEventHook<MouseEventParams>()
+  const { on: onMove, trigger: dispatchMoveEvent } = createEventHook<MouseEventParams>()
+  const { on: onEnd, trigger: dispatchEndEvent } = createEventHook<MouseEventParams>()
+  const { on: onDragging, trigger: dispatchDraggingEvent } = createEventHook<MouseEventParams>()
 
-  function updateCanDraggable() {
+  function getCanDraggable(event: EnhancedMouseEvent) {
     if (isBool(canDraggable) && canDraggable === false) {
-      setCanDraggable(false)
-      return
+      return false
     }
-
-    if (isFunc(canDraggable) && canDraggable(element, event) === false) {
-      setCanDraggable(false)
-      return
+    if (isFunc(canDraggable) && canDraggable(event.target, event) === false) {
+      return false
     }
-
-    setCanDraggable(true)
+    return true
   }
 
-  function updateCanDropable() {
+  function getCanDropable(event: EnhancedMouseEvent) {
     if (isBool(canDropable) && canDropable === false) {
-      setCanDropable(false)
-      return
+      return false
     }
-
-    if (isFunc(canDropable) && canDropable(element, event) === false) {
-      setCanDropable(false)
-      return
+    if (isFunc(canDropable) && canDropable(event.target, event) === false) {
+      return false
     }
-
-    setCanDropable(true)
+    return true
   }
 
-  function updateDragging() {
-    unref(_canDraggable) ? setDragging(true) : setDragging(false)
+  function handleMouseDown(event: MouseEvent, iframe?: HTMLIFrameElement) {
+    const evt = castEnhancedMouseEvent(event, iframe)
+    const canDraggable = getCanDraggable(evt)
+    canDraggableRef.value = canDraggable
+    if (!canDraggable) return
+    isDraggingRef.value = true
+
+    const payload = {
+      event: evt,
+      target: evt.target,
+      inIframe: !!iframe,
+    }
+    dispatchStartEvent(payload)
+    dispatchDraggingEvent(payload)
   }
 
-  onStart(updateCanDraggable)
-  onStart(updateDragging)
+  function handleMouseMove(event: MouseEvent, iframe?: HTMLIFrameElement) {
+    if (!unref(isDraggingRef)) return
+    const evt = castEnhancedMouseEvent(event, iframe)
 
-  const context = {
-    use: () => {
+    const payload = {
+      event: evt,
+      target: evt.target,
+      inIframe: !!iframe,
+    }
+    dispatchMoveEvent(payload)
+    dispatchDraggingEvent(payload)
+  }
 
+  function handleMouseUp(event: MouseEvent, iframe?: HTMLIFrameElement) {
+    if (!unref(isDraggingRef)) return
+    const evt = castEnhancedMouseEvent(event, iframe)
+    const canDropable = getCanDropable(evt)
+    canDropableRef.value = canDropable
+    isDraggingRef.value = false
+
+    const payload = {
+      event: evt,
+      target: evt.target,
+      inIframe: !!iframe,
+    }
+    dispatchEndEvent(payload)
+  }
+
+  function useCanDropable() {
+    return canDropableRef
+  }
+
+  function useCanDraggable() {
+    return canDraggableRef
+  }
+
+  function useDragging() {
+    return isDraggingRef
+  }
+
+  useEventListener(document, 'mousedown', handleMouseDown)
+  useEventListener(document, 'mousemove', handleMouseMove)
+  useEventListener(document, 'mouseup', handleMouseUp)
+
+  let stop = noop as AnyFn
+
+  if (frames) {
+    stop = watch(frames, (vals) => {
+      vals.forEach((val) => {
+        const el = toValue(val)
+        if (isIframeTag(el)) {
+          const iframeDocument = el.contentDocument
+          if (iframeDocument) {
+            useEventListener(iframeDocument, 'mousedown', event => handleMouseDown(event, el))
+            useEventListener(iframeDocument, 'mousemove', event => handleMouseMove(event, el))
+            useEventListener(iframeDocument, 'mouseup', event => handleMouseUp(event, el))
+          }
+        }
+      })
+    }, { flush: 'post' })
+  }
+
+  const context: UseDragDropContext = {
+    onEnd,
+    onMove,
+    onStart,
+    onDragging,
+    useDragging,
+    useCanDropable,
+    useCanDraggable,
+    use(plugin: DragDropPlugin) {
+      return use(context, plugin)!
     },
-    useMouseMove() {},
-    useMouseUp() {},
-    useDragging: () => isDragging,
-    useCanDropable: () => _canDropable,
-    useCanDraggable: () => _canDraggable,
-    useMouseDown: () => ({
-      element,
-      event,
-      onStart(fn: AnyFn) {
-        onStart(() => {
-          if (!unref(_canDraggable)) return
-          fn()
-        })
-      },
-    }),
   }
+
+  onScopeDispose(stop)
 
   return context
 }
