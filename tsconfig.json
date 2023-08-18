@@ -22,6 +22,9 @@
       ],
       "@drag-drop/shared": [
         "./packages/shared/index.ts"
+      ],
+      "@drag-drop/plugin-mouse-follow": [
+        "./packages/plugins/mouseFollow/index.tsx"
       ]
     }
   },

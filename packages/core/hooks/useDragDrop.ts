@@ -1,6 +1,5 @@
-import { type MaybeRefOrGetter, onScopeDispose, ref, toValue, unref, watch } from 'vue'
-import type { AnyFn } from '@drag-drop/shared'
-import { createEventHook, isBool, isFunc, isIframeTag, noop, useEventListener } from '@drag-drop/shared'
+import { type MaybeRefOrGetter, computed, ref, toValue, unref } from 'vue'
+import { createEventHook, isBool, isFunc, isIframeTag, useEventListener } from '@drag-drop/shared'
 import type { DragDropPlugin, EnhancedMouseEvent, MouseEventParams, NullUndefinedAble, UseDragDropContext } from '../types'
 import { castEnhancedMouseEvent } from '../helpers/castEnhancedMouseEvent'
 import { use } from '../helpers/plugin'
@@ -104,22 +103,28 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContex
   useEventListener(document, 'mousemove', handleMouseMove)
   useEventListener(document, 'mouseup', handleMouseUp)
 
-  let stop = noop as AnyFn
-
   if (frames) {
-    stop = watch(frames, (vals) => {
-      vals.forEach((val) => {
-        const el = toValue(val)
+    frames.forEach((frame) => {
+      const iframeGetter = computed(() => {
+        const el = toValue(frame)
         if (isIframeTag(el)) {
-          const iframeDocument = el.contentDocument
-          if (iframeDocument) {
-            useEventListener(iframeDocument, 'mousedown', event => handleMouseDown(event, el))
-            useEventListener(iframeDocument, 'mousemove', event => handleMouseMove(event, el))
-            useEventListener(iframeDocument, 'mouseup', event => handleMouseUp(event, el))
-          }
+          return el
         }
+        return null
       })
-    }, { flush: 'post' })
+
+      const iframeDocumentGetter = computed(() => {
+        const iframe = unref(iframeGetter)
+        if (iframe) {
+          return iframe.contentDocument
+        }
+        return null
+      })
+
+      useEventListener(iframeDocumentGetter, 'mousedown', event => handleMouseDown(event, unref(iframeGetter)!))
+      useEventListener(iframeDocumentGetter, 'mousemove', event => handleMouseMove(event, unref(iframeGetter)!))
+      useEventListener(iframeDocumentGetter, 'mouseup', event => handleMouseUp(event, unref(iframeGetter)!))
+    })
   }
 
   const context: UseDragDropContext = {
@@ -134,8 +139,6 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContex
       return use(context, plugin)!
     },
   }
-
-  onScopeDispose(stop)
 
   return context
 }

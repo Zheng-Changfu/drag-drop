@@ -1,6 +1,5 @@
 {
-  "name": "@reactive-drag/mouse-follow-plugin",
+  "name": "@drag-drop/plugin-mouse-follow",
   "type": "module",
-  "version": "0.0.0",
-  "private": true
+  "version": "0.0.1"
 }

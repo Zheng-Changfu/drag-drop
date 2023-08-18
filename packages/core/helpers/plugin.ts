@@ -105,7 +105,6 @@ function createPluginRootElement() {
   })
   render(vnode, document.body)
   pluginRootEl = vnode.el as any
-  console.log(pluginRootEl)
   return pluginRootEl
 }
 

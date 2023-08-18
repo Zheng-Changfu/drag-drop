@@ -1,74 +1,74 @@
-import type { UseReactionDragContext } from '@reactive-drag/core'
-import { isFunc } from '@reactive-drag/shared'
+import type { DragDropPluginCtx, MouseEventParams } from '@drag-drop/core'
+import { isFunc } from '@drag-drop/shared'
 import { ref, toValue, unref } from 'vue'
 import type { CSSProperties, MaybeRefOrGetter, VNodeChild } from 'vue'
 
-interface FuncParams {
-  x: number
-  y: number
-  element: HTMLElement | undefined
-  event: MouseEvent
-}
-
 interface MouseFollowPluginOptions {
   style?: MaybeRefOrGetter<CSSProperties>
-  onDragging?: (params: FuncParams) => void
-  text?: string | ((params: Omit<FuncParams, 'event'>) => string)
-  customElement?: (params: Omit<FuncParams, 'event'>) => VNodeChild
+  text?: string | ((params: MouseEventParams | undefined) => string)
+  custom?: (params: MouseEventParams | undefined) => VNodeChild
+  onDragging?: (params: MouseEventParams) => void
 }
 
-type Position = Pick<FuncParams, 'x' | 'y'>
-
 export function mouseFollowPlugin(options: MouseFollowPluginOptions = {}) {
-  return function (dragContext: UseReactionDragContext) {
-    const { customElement, style = {}, onDragging, text = '' } = options
-    const { useDragElement, onDragging: _onDragging, isDragging } = dragContext
-    const positionRef = ref<Position>({ x: 0, y: 0 })
-    const dragElementRef = useDragElement()
+  return function ({ context }: DragDropPluginCtx) {
+    const {
+      custom,
+      onDragging,
+      style = {},
+      text = '默认文本',
+    } = options
 
-    _onDragging((event) => {
-      const x = event.clientX
-      const y = event.clientY
-      positionRef.value.x = x
-      positionRef.value.y = y
-      onDragging?.({
-        x,
-        y,
-        event,
-        element: unref(dragElementRef),
-      })
-    })
+    const isDraggingRef = context.useDragging()
+    const mouseDownParamsRef = ref<MouseEventParams>()
+    const positionRef = ref<{ x: number; y: number }>({ x: 0, y: 0 })
 
     function getText() {
-      const { x, y } = unref(positionRef)
-      const element = unref(dragElementRef)
-      if (isFunc(text)) {
-        return text({ x, y, element })
-      }
-      return text
+      return isFunc(text) ? text(unref(mouseDownParamsRef)) : text
     }
+
+    function updatePosition() {
+      context.onDragging((params) => {
+        positionRef.value.x = params.event.x
+        positionRef.value.y = params.event.y
+        onDragging?.(params)
+      })
+    }
+
+    function updateMouseDownParams() {
+      context.onStart(params => mouseDownParamsRef.value = params)
+      context.onEnd(() => mouseDownParamsRef.value = undefined)
+    }
+
+    updatePosition()
+    updateMouseDownParams()
 
     return () => {
       const { x, y } = unref(positionRef)
-      const element = unref(dragElementRef)
+      const isDragging = unref(isDraggingRef)
+      const mouseDownParams = unref(mouseDownParamsRef)
 
-      if (isFunc(customElement)) {
-        return <div v-show={ isDragging() }>{ customElement({ x, y, element }) }</div>
+      if (isFunc(custom)) {
+        return <div v-show={isDragging}>
+          {custom(mouseDownParams)}
+        </div>
       }
 
-      return <div v-show={ isDragging() } style={{
-        position: 'fixed',
-        left: `${x}px`,
-        top: `${y}px`,
-        zIndex: 1,
-        color: '#fff',
-        padding: '4px 8px',
-        background: '#0000f6',
-        whiteSpace: 'nowrap',
-        pointerEvents: 'none',
-        ...toValue(style),
-      }}>
-        { getText() }
+      return <div
+        v-show={isDragging}
+        style={{
+          position: 'fixed',
+          left: `${x}px`,
+          top: `${y}px`,
+          zIndex: 1,
+          color: '#fff',
+          padding: '4px 8px',
+          background: '#0000f6',
+          whiteSpace: 'nowrap',
+          pointerEvents: 'none',
+          ...toValue(style),
+        }}>
+        {getText()}
       </div>
     }
   }
