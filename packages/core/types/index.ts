@@ -27,7 +27,7 @@ export interface UseReturn {
   pause: () => void
   resume: () => void
   use: UseDragDropContext['use']
-  exposed: Record<string, any>
+  exposed: any
 }
 
 export interface EventReturn {
@@ -35,7 +35,7 @@ export interface EventReturn {
 }
 
 export interface UseDragDropContext {
-  use: <T extends DragDropPlugin>(plugin: T) => UseReturn
+  use: (plugin: DragDropPlugin) => UseReturn
   useDragging: () => Ref<boolean>
   useCanDropable: () => Ref<boolean>
   useCanDraggable: () => Ref<boolean>
