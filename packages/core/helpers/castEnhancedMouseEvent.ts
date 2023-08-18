@@ -1,5 +1,5 @@
 import { getBoundingClientRect } from '@drag-drop/shared'
-import type { EnhancedMouseEvent } from '../types'
+import type { EnhancedMouseEvent, NullUndefinedAble } from '../types'
 
 export function castEnhancedMouseEvent(event: MouseEvent, iframe?: HTMLIFrameElement): EnhancedMouseEvent {
   const {
@@ -28,8 +28,10 @@ export function castEnhancedMouseEvent(event: MouseEvent, iframe?: HTMLIFrameEle
       offsetY,
       screenX,
       screenY,
-      target: target as HTMLElement | null | undefined,
+      target: target as NullUndefinedAble<HTMLElement>,
       originEvent: event,
+      iframe: undefined,
+      inIframe: false,
     }
   }
 
@@ -47,6 +49,8 @@ export function castEnhancedMouseEvent(event: MouseEvent, iframe?: HTMLIFrameEle
     screenX: screenX + left,
     screenY: screenY + top,
     originEvent: event,
-    target: target as HTMLElement | null | undefined,
+    target: target as NullUndefinedAble<HTMLElement>,
+    inIframe: true,
+    iframe,
   }
 }

@@ -1,4 +1,4 @@
-import type { Ref } from 'vue'
+import type { ComputedRef, Ref } from 'vue'
 
 export type NullUndefinedAble<T> = T | null | undefined
 
@@ -13,14 +13,10 @@ export interface EnhancedMouseEvent {
   offsetY: number
   screenX: number
   screenY: number
+  inIframe: boolean
+  iframe: HTMLIFrameElement | undefined
   target: NullUndefinedAble<HTMLElement>
   originEvent: MouseEvent
-}
-
-export interface MouseEventParams {
-  event: EnhancedMouseEvent
-  target: NullUndefinedAble<HTMLElement>
-  inIframe: boolean
 }
 
 export interface UseReturn {
@@ -34,15 +30,24 @@ export interface EventReturn {
   off: () => void
 }
 
+export interface DropDropEventsCallback {
+  onEnd: (event: EnhancedMouseEvent) => void
+  onMove: (event: EnhancedMouseEvent) => void
+  onStart: (event: EnhancedMouseEvent) => void
+  onDragging: (event: EnhancedMouseEvent) => void
+}
+
 export interface UseDragDropContext {
   use: (plugin: DragDropPlugin) => UseReturn
   useDragging: () => Ref<boolean>
   useCanDropable: () => Ref<boolean>
   useCanDraggable: () => Ref<boolean>
-  onStart: (fn: (params: MouseEventParams) => void) => EventReturn
-  onMove: (fn: (params: MouseEventParams) => void) => EventReturn
-  onEnd: (fn: (params: MouseEventParams) => void) => EventReturn
-  onDragging: (fn: (params: MouseEventParams) => void) => EventReturn
+  useFrameList: () => Frame[]
+  onEnd: (fn: DropDropEventsCallback['onEnd']) => EventReturn
+  onMove: (fn: DropDropEventsCallback['onMove']) => EventReturn
+  onStart: (fn: DropDropEventsCallback['onStart']) => EventReturn
+  onDragging: (fn: DropDropEventsCallback['onDragging']) => EventReturn
+  castEnhancedMouseEvent: (event: MouseEvent, iframe?: HTMLIFrameElement | undefined) => EnhancedMouseEvent
 }
 
 export interface DragDropPluginCtx {
@@ -51,3 +56,8 @@ export interface DragDropPluginCtx {
 }
 
 export type DragDropPlugin = (ctx: DragDropPluginCtx) => any
+
+export interface Frame {
+  iframeGetter: ComputedRef<HTMLIFrameElement | null>
+  iframeDocumentGetter: ComputedRef<Document | null>
+}

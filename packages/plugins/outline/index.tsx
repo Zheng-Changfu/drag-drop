@@ -1,61 +1,102 @@
-import type { UseReactionDragContext } from '@reactive-drag/core'
-import { isBool, isFunc } from '@reactive-drag/shared'
-import { computed, ref, toValue, unref } from 'vue'
+import type { DragDropPluginCtx, DropDropEventsCallback } from '@drag-drop/core'
+import type { AnyFn } from '@drag-drop/shared'
+import { getBoundingClientRect, isBool, isHtmlElement, isNumber, noop } from '@drag-drop/shared'
+import { onScopeDispose, ref, toValue, unref, watch } from 'vue'
 import type { CSSProperties, MaybeRefOrGetter } from 'vue'
 
-interface OutlinePluginOptions {
-  style?: MaybeRefOrGetter<CSSProperties>
-  canDropable?: boolean | ((element: HTMLElement) => boolean)
+interface BoundingRect {
+  left: number
+  top: number
+  width: number
+  height: number
 }
 
-interface Position {
-  x: number
-  y: number
+interface TriggerFn {
+  (hide: false): void
+  (x: number, y: number): void
+  (element: HTMLElement): void
+}
+
+interface OutlinePluginOptions extends Partial<Pick<DropDropEventsCallback, 'onDragging'>> {
+  style?: MaybeRefOrGetter<CSSProperties>
+  draggingEnable?: boolean
 }
 
 export function outlinePlugin(options: OutlinePluginOptions = {}) {
-  return function (dragContext: UseReactionDragContext) {
-    const { style = {}, canDropable = true } = options
-    const { onDragging, isDragging } = dragContext
-    const positionRef = ref<Position>({ x: 0, y: 0 })
+  return function ({ context, expose }: DragDropPluginCtx) {
+    const {
+      style = {},
+      onDragging,
+      draggingEnable = true,
+    } = options
 
-    function syncPosition(event: MouseEvent) {
-      positionRef.value.x = event.clientX
-      positionRef.value.y = event.clientY
+    const boundingRectRef = ref<BoundingRect>()
+    const canDropableRef = context.useCanDropable()
+
+    function updateBoundingRect(val?: BoundingRect) {
+      boundingRectRef.value = val
     }
 
-    function getCanDropable(element: HTMLElement) {
-      if (isBool(canDropable) && canDropable === false) {
-        return false
+    const trigger: TriggerFn = (val: number | HTMLElement | false, y?: number) => {
+      if (isBool(val)) {
+        // hide
+        updateBoundingRect()
+        return
       }
-      if (isFunc(canDropable) && canDropable(element) === false) {
-        return false
+
+      let el: HTMLElement | undefined
+      if (isNumber(val)) {
+        // trigger
+        if (!isNumber(y)) {
+          console.warn('y expect a number')
+          y = 0
+        }
+        const element = document.elementFromPoint(val, y)
+        if (element) {
+          el = element as HTMLElement
+        }
       }
-      return true
+
+      if (isHtmlElement(val)) {
+        el = val
+      }
+
+      if (!el) {
+        updateBoundingRect()
+        return
+      }
+
+      updateBoundingRect(getBoundingClientRect(el))
     }
 
-    const computedBoundingRect = computed(() => {
-      const { x, y } = positionRef.value
-      const element = document.elementFromPoint(x, y)
-      if (element && getCanDropable(element as any)) {
-        return element.getBoundingClientRect()
-      }
-      return {
-        left: 0,
-        top: 0,
-        width: 0,
-        height: 0,
-      }
-    })
+    let stop = noop as AnyFn
 
-    onDragging(syncPosition)
-    // TODO: mousemove
+    if (draggingEnable) {
+      context.onDragging((event) => {
+        unref(canDropableRef)
+          ? trigger(event.x, event.y)
+          : trigger(false)
+
+        onDragging?.(event)
+      })
+      stop = watch(context.useDragging(), (isDragging) => {
+        if (isDragging === false) {
+          trigger(false)
+        }
+      })
+    }
+
+    onScopeDispose(stop)
+    expose({ trigger })
 
     return () => {
-      const { left, top, width, height } = unref(computedBoundingRect)
-
+      const boundingRect = unref(boundingRectRef)
+      if (!boundingRect) {
+        return null
+      }
+      const { left, top, width, height } = boundingRect
+      console.log(3)
       return <div
-       v-show={isDragging()}
        style={{
          position: 'fixed',
          left: `${left}px`,
@@ -71,4 +112,8 @@ export function outlinePlugin(options: OutlinePluginOptions = {}) {
        }}></div>
     }
   }
+}
+
+export interface OutlinePluginExposed {
+  trigger: TriggerFn
 }

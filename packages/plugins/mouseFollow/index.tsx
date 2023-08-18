@@ -1,13 +1,13 @@
-import type { DragDropPluginCtx, MouseEventParams } from '@drag-drop/core'
+import type { DragDropPluginCtx, EnhancedMouseEvent } from '@drag-drop/core'
 import { isFunc } from '@drag-drop/shared'
 import { ref, toValue, unref } from 'vue'
 import type { CSSProperties, MaybeRefOrGetter, VNodeChild } from 'vue'
 
 interface MouseFollowPluginOptions {
   style?: MaybeRefOrGetter<CSSProperties>
-  text?: string | ((params: MouseEventParams | undefined) => string)
-  custom?: (params: MouseEventParams | undefined) => VNodeChild
-  onDragging?: (params: MouseEventParams) => void
+  text?: string | ((event: EnhancedMouseEvent | undefined) => string)
+  custom?: (event: EnhancedMouseEvent | undefined) => VNodeChild
+  onDragging?: (event: EnhancedMouseEvent) => void
 }
 
 export function mouseFollowPlugin(options: MouseFollowPluginOptions = {}) {
@@ -20,24 +20,24 @@ export function mouseFollowPlugin(options: MouseFollowPluginOptions = {}) {
     } = options
 
     const isDraggingRef = context.useDragging()
-    const mouseDownParamsRef = ref<MouseEventParams>()
+    const mouseDownEventRef = ref<EnhancedMouseEvent>()
     const positionRef = ref<{ x: number; y: number }>({ x: 0, y: 0 })
 
     function getText() {
-      return isFunc(text) ? text(unref(mouseDownParamsRef)) : text
+      return isFunc(text) ? text(unref(mouseDownEventRef)) : text
     }
 
     function updatePosition() {
-      context.onDragging((params) => {
-        positionRef.value.x = params.event.x
-        positionRef.value.y = params.event.y
-        onDragging?.(params)
+      context.onDragging((event) => {
+        positionRef.value.x = event.x
+        positionRef.value.y = event.y
+        onDragging?.(event)
       })
     }
 
     function updateMouseDownParams() {
-      context.onStart(params => mouseDownParamsRef.value = params)
-      context.onEnd(() => mouseDownParamsRef.value = undefined)
+      context.onStart(event => mouseDownEventRef.value = event)
+      context.onEnd(() => mouseDownEventRef.value = undefined)
     }
 
     updatePosition()
@@ -46,11 +46,11 @@ export function mouseFollowPlugin(options: MouseFollowPluginOptions = {}) {
     return () => {
       const { x, y } = unref(positionRef)
       const isDragging = unref(isDraggingRef)
-      const mouseDownParams = unref(mouseDownParamsRef)
+      const mouseDownEvent = unref(mouseDownEventRef)
 
       if (isFunc(custom)) {
         return <div v-show={isDragging}>
-          {custom(mouseDownParams)}
+          {custom(mouseDownEvent)}
         </div>
       }
 

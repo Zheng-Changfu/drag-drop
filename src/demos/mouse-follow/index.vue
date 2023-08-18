@@ -7,12 +7,21 @@ import { IframeContainer } from '../../IframeContainer'
 
 const iframeInstRef = ref()
 const context = useDragDrop({
-  canDraggable: element => !!element?.classList.contains('item'),
+  canDraggable: event => !!event.target?.classList.contains('item'),
   frames: [
     computed(() => iframeInstRef.value?.$el),
   ],
 })
-context.use(mouseFollowPlugin({ text: params => params?.target?.textContent ?? '' }))
+const { pause, resume } = context.use(mouseFollowPlugin({ text: params => params?.target?.textContent ?? '' }))
+
+setTimeout(() => {
+  pause()
+  console.log('stop')
+  setTimeout(() => {
+    console.log('resume')
+    resume()
+  }, 2000)
+}, 3000)
 
 const style: CSSProperties = { userSelect: 'none' }
 </script>

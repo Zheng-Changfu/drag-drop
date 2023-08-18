@@ -1,13 +1,13 @@
 import { type MaybeRefOrGetter, computed, ref, toValue, unref } from 'vue'
 import { createEventHook, isBool, isFunc, isIframeTag, useEventListener } from '@drag-drop/shared'
-import type { DragDropPlugin, EnhancedMouseEvent, MouseEventParams, NullUndefinedAble, UseDragDropContext } from '../types'
+import type { DragDropPlugin, EnhancedMouseEvent, Frame, UseDragDropContext } from '../types'
 import { castEnhancedMouseEvent } from '../helpers/castEnhancedMouseEvent'
 import { use } from '../helpers/plugin'
 
 interface UseDragDropOptions {
   frames?: Array<MaybeRefOrGetter<HTMLIFrameElement | undefined>>
-  canDropable?: boolean | ((element: NullUndefinedAble<HTMLElement>, event: EnhancedMouseEvent) => boolean)
-  canDraggable?: boolean | ((element: NullUndefinedAble<HTMLElement>, event: EnhancedMouseEvent) => boolean)
+  canDropable?: boolean | ((event: EnhancedMouseEvent) => boolean)
+  canDraggable?: boolean | ((event: EnhancedMouseEvent) => boolean)
 }
 export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContext {
   const {
@@ -15,19 +15,22 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContex
     canDropable,
     canDraggable,
   } = options
+
+  const frameList: Frame[] = []
   const isDraggingRef = ref(false)
   const canDraggableRef = ref(true)
   const canDropableRef = ref(true)
-  const { on: onStart, trigger: dispatchStartEvent } = createEventHook<MouseEventParams>()
-  const { on: onMove, trigger: dispatchMoveEvent } = createEventHook<MouseEventParams>()
-  const { on: onEnd, trigger: dispatchEndEvent } = createEventHook<MouseEventParams>()
-  const { on: onDragging, trigger: dispatchDraggingEvent } = createEventHook<MouseEventParams>()
+
+  const { on: onEnd, trigger: dispatchEndEvent } = createEventHook<EnhancedMouseEvent>()
+  const { on: onMove, trigger: dispatchMoveEvent } = createEventHook<EnhancedMouseEvent>()
+  const { on: onStart, trigger: dispatchStartEvent } = createEventHook<EnhancedMouseEvent>()
+  const { on: onDragging, trigger: dispatchDraggingEvent } = createEventHook<EnhancedMouseEvent>()
 
   function getCanDraggable(event: EnhancedMouseEvent) {
     if (isBool(canDraggable) && canDraggable === false) {
       return false
     }
-    if (isFunc(canDraggable) && canDraggable(event.target, event) === false) {
+    if (isFunc(canDraggable) && canDraggable(event) === false) {
       return false
     }
     return true
@@ -37,7 +40,7 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContex
     if (isBool(canDropable) && canDropable === false) {
       return false
     }
-    if (isFunc(canDropable) && canDropable(event.target, event) === false) {
+    if (isFunc(canDropable) && canDropable(event) === false) {
       return false
     }
     return true
@@ -49,27 +52,17 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContex
     canDraggableRef.value = canDraggable
     if (!canDraggable) return
     isDraggingRef.value = true
-
-    const payload = {
-      event: evt,
-      target: evt.target,
-      inIframe: !!iframe,
-    }
-    dispatchStartEvent(payload)
-    dispatchDraggingEvent(payload)
+    dispatchStartEvent(evt)
+    dispatchDraggingEvent(evt)
   }
 
   function handleMouseMove(event: MouseEvent, iframe?: HTMLIFrameElement) {
     if (!unref(isDraggingRef)) return
     const evt = castEnhancedMouseEvent(event, iframe)
-
-    const payload = {
-      event: evt,
-      target: evt.target,
-      inIframe: !!iframe,
-    }
-    dispatchMoveEvent(payload)
-    dispatchDraggingEvent(payload)
+    const canDropable = getCanDropable(evt)
+    canDropableRef.value = canDropable
+    dispatchMoveEvent(evt)
+    dispatchDraggingEvent(evt)
   }
 
   function handleMouseUp(event: MouseEvent, iframe?: HTMLIFrameElement) {
@@ -78,13 +71,7 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContex
     const canDropable = getCanDropable(evt)
     canDropableRef.value = canDropable
     isDraggingRef.value = false
-
-    const payload = {
-      event: evt,
-      target: evt.target,
-      inIframe: !!iframe,
-    }
-    dispatchEndEvent(payload)
+    dispatchEndEvent(evt)
   }
 
   function useCanDropable() {
@@ -97,6 +84,10 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContex
 
   function useDragging() {
     return isDraggingRef
+  }
+
+  function useFrameList() {
+    return frameList
   }
 
   useEventListener(document, 'mousedown', handleMouseDown)
@@ -124,6 +115,11 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContex
       useEventListener(iframeDocumentGetter, 'mousedown', event => handleMouseDown(event, unref(iframeGetter)!))
       useEventListener(iframeDocumentGetter, 'mousemove', event => handleMouseMove(event, unref(iframeGetter)!))
       useEventListener(iframeDocumentGetter, 'mouseup', event => handleMouseUp(event, unref(iframeGetter)!))
+
+      frameList.push({
+        iframeGetter,
+        iframeDocumentGetter,
+      })
     })
   }
 
@@ -133,8 +129,10 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContex
     onStart,
     onDragging,
     useDragging,
+    useFrameList,
     useCanDropable,
     useCanDraggable,
+    castEnhancedMouseEvent,
     use(plugin: DragDropPlugin) {
       return use(context, plugin)!
     },

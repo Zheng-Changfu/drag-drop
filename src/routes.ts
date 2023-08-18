@@ -10,4 +10,11 @@ export const routes = [
       desc: '鼠标跟随插件演示',
     },
   },
+  {
+    path: '/outline',
+    component: () => import('./demos/outline/index.vue'),
+    meta: {
+      desc: 'outline 插件演示',
+    },
+  },
 ]

@@ -7,6 +7,7 @@ importers:
       '@antfu/eslint-config': 0.39.3
       '@drag-drop/core': workspace:0.0.1
       '@drag-drop/plugin-mouse-follow': workspace:^0.0.1
+      '@drag-drop/plugin-outline': workspace:^0.0.1
       '@drag-drop/shared': workspace:0.0.1
       '@vitejs/plugin-vue': ^4.2.3
       '@vitejs/plugin-vue-jsx': ^3.0.1
@@ -20,6 +21,7 @@ importers:
     dependencies:
       '@drag-drop/core': link:packages/core
       '@drag-drop/plugin-mouse-follow': link:packages/plugins/mouseFollow
+      '@drag-drop/plugin-outline': link:packages/plugins/outline
       '@drag-drop/shared': link:packages/shared
       '@vueuse/core': 10.3.0_vue@3.3.4
       vue: 3.3.4

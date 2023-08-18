@@ -25,6 +25,9 @@
       ],
       "@drag-drop/plugin-mouse-follow": [
         "./packages/plugins/mouseFollow/index.tsx"
+      ],
+      "@drag-drop/plugin-outline": [
+        "./packages/plugins/outline/index.tsx"
       ]
     }
   },
