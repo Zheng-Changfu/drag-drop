@@ -1,7 +1,6 @@
 # Drag-Drop
 ## 描述
 基于 `Vue3 框架`的拖拽库,可以拖拽一切
-## 开发中...
 ## 调试
 1. git clone https://github.com/Zheng-Changfu/drag-drop.git
 2. cd `[projectName]`
@@ -17,3 +16,6 @@
 | 自由拖拽插件 | `@drag-drop/plugin-draggable` | ✅ | ❌ | 
 | 低代码流式布局`辅助线`插件 | `@drag-drop/plugin-auxiliaryLine` |✅ | ❌ | 
 | 低代码自由布局`标尺线`插件 | `@drag-drop/plugin-rulerLine` | ✅ | ❌ | 
+
+## 如何使用
+开发中...
