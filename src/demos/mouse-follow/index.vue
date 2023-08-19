@@ -12,16 +12,7 @@ const context = useDragDrop({
     computed(() => iframeInstRef.value?.$el),
   ],
 })
-const { pause, resume } = context.use(mouseFollowPlugin({ text: params => params?.target?.textContent ?? '' }))
-
-setTimeout(() => {
-  pause()
-  console.log('stop')
-  setTimeout(() => {
-    console.log('resume')
-    resume()
-  }, 2000)
-}, 3000)
+context.use(mouseFollowPlugin({ text: params => params?.target?.textContent ?? '' }))
 
 const style: CSSProperties = { userSelect: 'none' }
 </script>

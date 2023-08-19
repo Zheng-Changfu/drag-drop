@@ -10,22 +10,14 @@ function canDropable(event: EnhancedMouseEvent) {
   const target = event.target
   return !!target?.classList.contains('item') || !!target?.classList.contains('container')
 }
+
 const context = useDragDrop({ canDropable })
-const { exposed, pause, resume } = context.use(outlinePlugin())
+const { exposed } = context.use(outlinePlugin())
 const { trigger } = exposed as OutlinePluginExposed
 
 function random(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
-
-setTimeout(() => {
-  pause()
-  console.log('stop')
-  setTimeout(() => {
-    console.log('resume')
-    resume()
-  }, 2000)
-}, 3000)
 
 function handleTriggerOutLine() {
   const id = random(1, 6)

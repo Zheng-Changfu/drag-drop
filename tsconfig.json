@@ -28,6 +28,9 @@
       ],
       "@drag-drop/plugin-outline": [
         "./packages/plugins/outline/index.tsx"
+      ],
+      "@drag-drop/plugin-sort": [
+        "./packages/plugins/sort/index.tsx"
       ]
     }
   },

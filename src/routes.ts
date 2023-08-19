@@ -17,4 +17,18 @@ export const routes = [
       desc: 'outline 插件演示',
     },
   },
+  {
+    path: '/sort',
+    component: () => import('./demos/sort/index.vue'),
+    meta: {
+      desc: '排序插件演示',
+    },
+  },
+  {
+    path: '/sort-two',
+    component: () => import('./demos/sort-two/index.vue'),
+    meta: {
+      desc: '2个列表排序插件演示',
+    },
+  },
 ]

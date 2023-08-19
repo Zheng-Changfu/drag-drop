@@ -12,6 +12,7 @@
     "@drag-drop/core": "workspace:0.0.1",
     "@drag-drop/plugin-mouse-follow": "workspace:^0.0.1",
     "@drag-drop/plugin-outline": "workspace:^0.0.1",
+    "@drag-drop/plugin-sort": "workspace:^",
     "@drag-drop/shared": "workspace:0.0.1",
     "@vueuse/core": "^10.3.0",
     "vue": "^3.3.4",

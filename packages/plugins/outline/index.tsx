@@ -1,4 +1,4 @@
-import type { DragDropPluginCtx, DropDropEventsCallback } from '@drag-drop/core'
+import type { DragDropPluginCtx, DrapDropEventsCallback } from '@drag-drop/core'
 import type { AnyFn } from '@drag-drop/shared'
 import { getBoundingClientRect, isBool, isHtmlElement, isNumber, noop } from '@drag-drop/shared'
 import { onScopeDispose, ref, toValue, unref, watch } from 'vue'
@@ -17,7 +17,7 @@ interface TriggerFn {
   (element: HTMLElement): void
 }
 
-interface OutlinePluginOptions extends Partial<Pick<DropDropEventsCallback, 'onDragging'>> {
+interface OutlinePluginOptions extends Partial<Pick<DrapDropEventsCallback, 'onDragging'>> {
   style?: MaybeRefOrGetter<CSSProperties>
   draggingEnable?: boolean
 }

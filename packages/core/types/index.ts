@@ -30,7 +30,7 @@ export interface EventReturn {
   off: () => void
 }
 
-export interface DropDropEventsCallback {
+export interface DrapDropEventsCallback {
   onEnd: (event: EnhancedMouseEvent) => void
   onMove: (event: EnhancedMouseEvent) => void
   onStart: (event: EnhancedMouseEvent) => void
@@ -43,10 +43,10 @@ export interface UseDragDropContext {
   useCanDropable: () => Ref<boolean>
   useCanDraggable: () => Ref<boolean>
   useFrameList: () => Frame[]
-  onEnd: (fn: DropDropEventsCallback['onEnd']) => EventReturn
-  onMove: (fn: DropDropEventsCallback['onMove']) => EventReturn
-  onStart: (fn: DropDropEventsCallback['onStart']) => EventReturn
-  onDragging: (fn: DropDropEventsCallback['onDragging']) => EventReturn
+  onEnd: (fn: DrapDropEventsCallback['onEnd']) => EventReturn
+  onMove: (fn: DrapDropEventsCallback['onMove']) => EventReturn
+  onStart: (fn: DrapDropEventsCallback['onStart']) => EventReturn
+  onDragging: (fn: DrapDropEventsCallback['onDragging']) => EventReturn
   castEnhancedMouseEvent: (event: MouseEvent, iframe?: HTMLIFrameElement | undefined) => EnhancedMouseEvent
 }
 
