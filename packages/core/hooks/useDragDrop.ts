@@ -51,6 +51,7 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContex
     const canDraggable = getCanDraggable(evt)
     canDraggableRef.value = canDraggable
     if (!canDraggable) return
+
     isDraggingRef.value = true
     dispatchStartEvent(evt)
     dispatchDraggingEvent(evt)

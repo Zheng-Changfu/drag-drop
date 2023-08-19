@@ -50,7 +50,6 @@ const { pause, resume } = context.use(sortPlugin({
 function getIndex(event: EnhancedMouseEvent) {
   const element = event.target!
   const id = element.getAttribute('id')
-  // const index = listRef.value.findIndex(item => item.id === id)
   return unref(id2IndexByListGetter).get(id as any) ?? -1
 }
 

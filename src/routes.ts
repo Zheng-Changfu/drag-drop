@@ -38,4 +38,11 @@ export const routes = [
       desc: '2个列表跨 iframe 排序插件演示',
     },
   },
+  {
+    path: '/tree',
+    component: () => import('./demos/tree/index.vue'),
+    meta: {
+      desc: '树形列表拖拽',
+    },
+  },
 ]

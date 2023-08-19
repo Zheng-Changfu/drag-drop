@@ -5,7 +5,7 @@ interface SortPluginOptions extends Partial<Omit<DrapDropEventsCallback, 'onDrag
   swap: (mouseDownEvent: EnhancedMouseEvent, mouseMoveEvent: EnhancedMouseEvent) => void
 }
 export function sortPlugin(options: SortPluginOptions) {
-  return function ({ context, expose }: DragDropPluginCtx) {
+  return function ({ context }: DragDropPluginCtx) {
     const {
       swap,
       onStart,
@@ -14,13 +14,6 @@ export function sortPlugin(options: SortPluginOptions) {
     } = options
     const mouseDownEventRef = ref<EnhancedMouseEvent>()
     const mouseMoveEventRef = ref<EnhancedMouseEvent>()
-
-    // 数据源变换，会重新渲染 DOM,可能会导致 mouseDownEventRef 不正确,所以这里可以让用户手动同步
-    function updateMouseDownEvent() {
-      if (unref(mouseDownEventRef) && unref(mouseMoveEventRef)) {
-        mouseDownEventRef.value = { ...unref(mouseMoveEventRef)! }
-      }
-    }
 
     context.onStart((event) => {
       mouseDownEventRef.value = event
@@ -38,11 +31,5 @@ export function sortPlugin(options: SortPluginOptions) {
       mouseMoveEventRef.value = undefined
       onEnd?.(event)
     })
-
-    expose({ updateMouseDownEvent })
   }
-}
-
-export interface SortPluginExposedData {
-  updateMouseDownEvent: () => void
 }

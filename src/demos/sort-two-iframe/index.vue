@@ -4,13 +4,14 @@ import { useDragDrop } from '@drag-drop/core'
 import { sortPlugin } from '@drag-drop/plugin-sort'
 import { useEventListener } from '@drag-drop/shared'
 import { computed, ref, unref } from 'vue'
+import { IframeContainer } from '../../IframeContainer'
 
 interface Item {
   id: string
   name: string
   color: string
 }
-
+const iframeInstRef = ref()
 const baseBackgroundColor = 'skyblue'
 const swapBackgroundColor = 'pink'
 
@@ -77,6 +78,9 @@ function resetColor() {
 
 const context = useDragDrop({
   canDraggable,
+  frames: [
+    computed(() => iframeInstRef.value?.$el),
+  ],
 })
 
 const { pause, resume } = context.use(sortPlugin({
@@ -121,33 +125,50 @@ async function swap(startEvent: EnhancedMouseEvent, moveEvent: EnhancedMouseEven
 }
 
 useEventListener('transitionend', resume)
-
 context.onEnd(resetColor)
 </script>
 
 <template>
-  <TransitionGroup tag="div" class="container" name="list">
-    <div v-for="item in list1Ref" :id="item.id" :key="item.id" class="item" :style="{ background: item.color }">
-      {{ item.name }}
-    </div>
-  </TransitionGroup>
-  <TransitionGroup tag="div" class="container" name="list">
-    <div v-for="item in list2Ref" :id="item.id" :key="item.id" class="item" :style="{ background: item.color }">
-      {{ item.name }}
-    </div>
-  </TransitionGroup>
+  <div class="root-container">
+    <TransitionGroup tag="div" class="container" name="list" @after-leave="resume">
+      <div v-for="item in list1Ref" :id="item.id" :key="item.id" class="item" :style="{ background: item.color }">
+        {{ item.name }}
+      </div>
+    </TransitionGroup>
+    <IframeContainer ref="iframeInstRef" :show-title="false" :style="{ width: '420px' }">
+      <div v-for="item in list2Ref" :id="item.id" :key="item.id" class="item" :style="{ background: item.color }">
+        {{ item.name }}
+      </div>
+    </IframeContainer>
+  </div>
 </template>
 
-<style scoped>
-.list-move{
-  transition: transform 0.1s linear;
+<style>
+.root-container{
+  display:flex;
+  gap:20px;
+  margin:100px 0 0 30px;
+  position: relative;
+}
+.list-move {
+  transition: all 0.1s linear;
+  background-color: red !important;
+}
+
+.list-enter-from,.list-leave-active {
+  opacity: 0;
+  transform: translate(10px);
+}
+.list-leave-active {
+  position: absolute;
 }
 
 .container{
-  display:inline-flex;
-  flex-direction:column;
+  position: relative;
+  display:flex;
+  flex-wrap:wrap;
+  width:320px;
   gap:10px;
-  margin:100px 0 0 30px;
   padding:20px;
   border:1px solid #ccc;
 }
@@ -155,9 +176,10 @@ context.onEnd(resetColor)
   display:flex;
   align-items:center;
   justify-content:center;
-  width:200px;
-  height:40px;
+  width:100px;
+  height:100px;
   user-select:none;
   border-radius:5px;
+  box-sizing:border-box;
 }
 </style>
