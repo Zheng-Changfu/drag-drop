@@ -1,5 +1,6 @@
 import type { Ref } from 'vue'
-import { onScopeDispose, toValue, watch } from 'vue'
+import { toValue, watch } from 'vue'
+import { tryOnScopeDispose } from './tryOnScopeDispose'
 
 type Fn = () => void
 
@@ -91,7 +92,7 @@ export function useEventListener(...args: any[]) {
     cleanup()
   }
 
-  onScopeDispose(stop)
+  tryOnScopeDispose(stop)
 
   return stop
 }

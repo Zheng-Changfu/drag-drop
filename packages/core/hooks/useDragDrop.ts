@@ -108,18 +108,26 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContex
       const iframeDocumentGetter = computed(() => {
         const iframe = unref(iframeGetter)
         if (iframe) {
+          iframe.onload = function () {
+            console.log(444, iframe.contentDocument)
+            iframe.contentDocument?.addEventListener('click', () => {
+              console.log(111)
+            })
+          }
           return iframe.contentDocument
         }
         return null
       })
 
-      useEventListener(iframeDocumentGetter, 'mousedown', event => handleMouseDown(event, unref(iframeGetter)!))
-      useEventListener(iframeDocumentGetter, 'mousemove', event => handleMouseMove(event, unref(iframeGetter)!))
-      useEventListener(iframeDocumentGetter, 'mouseup', event => handleMouseUp(event, unref(iframeGetter)!))
+      useEventListener(iframeGetter, 'load', () => {
+        useEventListener(iframeDocumentGetter, 'mousedown', event => handleMouseDown(event, unref(iframeGetter)!))
+        useEventListener(iframeDocumentGetter, 'mousemove', event => handleMouseMove(event, unref(iframeGetter)!))
+        useEventListener(iframeDocumentGetter, 'mouseup', event => handleMouseUp(event, unref(iframeGetter)!))
 
-      frameList.push({
-        iframeGetter,
-        iframeDocumentGetter,
+        frameList.push({
+          iframeGetter,
+          iframeDocumentGetter,
+        })
       })
     })
   }

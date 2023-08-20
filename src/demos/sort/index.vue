@@ -8,15 +8,19 @@ import { computed, ref, unref } from 'vue'
 interface Item {
   id: string
   name: string
+  color: string
 }
+const baseBackgroundColor = 'skyblue'
+const swapBackgroundColor = 'pink'
+
 const listRef = ref<Item[]>([
-  { id: '1', name: '1' },
-  { id: '2', name: '2' },
-  { id: '3', name: '3' },
-  { id: '4', name: '4' },
-  { id: '5', name: '5' },
-  { id: '6', name: '6' },
-  { id: '7', name: '7' },
+  { id: '1', name: '1', color: baseBackgroundColor },
+  { id: '2', name: '2', color: baseBackgroundColor },
+  { id: '3', name: '3', color: baseBackgroundColor },
+  { id: '4', name: '4', color: baseBackgroundColor },
+  { id: '5', name: '5', color: baseBackgroundColor },
+  { id: '6', name: '6', color: baseBackgroundColor },
+  { id: '7', name: '7', color: baseBackgroundColor },
 ])
 
 const id2IndexByListGetter = computed(() => {
@@ -31,20 +35,20 @@ function canDraggable(event: EnhancedMouseEvent) {
   return !!event.target?.classList.contains('item')
 }
 
-function updateElementBackground(event: EnhancedMouseEvent, color: string) {
-  const element = event.target!
-  element.style.background = color
+function tryUpdateColor(event: EnhancedMouseEvent, color: string) {
+  const index = getIndex(event)
+  if (~index) {
+    listRef.value[index].color = color
+  }
 }
 
 const context = useDragDrop({
   canDraggable,
 })
 
-let mouseDownEvent: EnhancedMouseEvent
 const { pause, resume } = context.use(sortPlugin({
   swap,
-  onStart: event => (mouseDownEvent = event) && updateElementBackground(event, 'pink'),
-  onEnd: () => updateElementBackground(mouseDownEvent, 'skyblue'),
+  onStart: event => tryUpdateColor(event, swapBackgroundColor),
 }))
 
 function getIndex(event: EnhancedMouseEvent) {
@@ -66,14 +70,24 @@ function swap(startEvent: EnhancedMouseEvent, moveEvent: EnhancedMouseEvent) {
   }
 }
 
-useEventListener(window, 'transitionend', () => {
+function resetColor() {
+  const list = unref(listRef)
+  const updatedColorItem = list.find(item => item.color === swapBackgroundColor)
+  if (updatedColorItem) {
+    updatedColorItem.color = baseBackgroundColor
+  }
+}
+
+useEventListener('transitionend', () => {
   resume()
 })
+
+context.onEnd(resetColor)
 </script>
 
 <template>
   <TransitionGroup tag="div" class="container" name="list">
-    <div v-for="item in listRef" :id="item.id" :key="item.id" class="item">
+    <div v-for="item in listRef" :id="item.id" :key="item.id" class="item" :style="{ background: item.color }">
       {{ item.name }}
     </div>
   </TransitionGroup>
@@ -98,7 +112,6 @@ useEventListener(window, 'transitionend', () => {
   justify-content:center;
   width:200px;
   height:40px;
-  background-color:skyblue;
   user-select:none;
   border-radius:5px;
 }

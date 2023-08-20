@@ -32,13 +32,6 @@ export const routes = [
     },
   },
   {
-    path: '/sort-two-iframe',
-    component: () => import('./demos/sort-two-iframe/index.vue'),
-    meta: {
-      desc: '2个列表跨 iframe 排序插件演示',
-    },
-  },
-  {
     path: '/tree',
     component: () => import('./demos/tree/index.vue'),
     meta: {

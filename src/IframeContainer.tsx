@@ -1,4 +1,4 @@
-import { TransitionGroup, defineComponent, onMounted, ref, render, unref, useSlots } from 'vue'
+import { defineComponent, onMounted, ref, render, useSlots } from 'vue'
 
 const isStyleTag = (el?: HTMLElement | Element) => el && el.tagName === 'STYLE'
 
@@ -65,17 +65,10 @@ export const IframeContainer = defineComponent({
       const body = iframeElRef.value!.contentDocument!.body
       const vnode = <div>
         {props.showTitle !== false && <h1>Iframe容器...</h1>}
-        <TransitionGroup tag="div" class="container" name="list" v-slots={slots}>
-        </TransitionGroup>
+        {renderSlots()}
       </div>
 
       render(vnode, body)
-    })
-
-    // 样式会被隔离，这里处理一下
-    onMounted(() => {
-      const iframeWindow = unref(iframeElRef)!.contentWindow!
-      iframeStyleSync(iframeWindow)
     })
 
     return () => {
