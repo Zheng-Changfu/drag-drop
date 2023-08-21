@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@drag-drop/core": "workspace:0.0.1",
+    "@drag-drop/plugin-auxiliary-line": "workspace:^0.0.1",
     "@drag-drop/plugin-mouse-follow": "workspace:^0.0.1",
     "@drag-drop/plugin-outline": "workspace:^0.0.1",
     "@drag-drop/plugin-sort": "workspace:^",
