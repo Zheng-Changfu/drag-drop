@@ -53,6 +53,10 @@ export function isInThresholdRange(element: HTMLElement, event: EnhancedMouseEve
   return xIsInThresholdRange && yIsInThresholdRange
 }
 
+export function isElementNode(val: any) {
+  return val && val.nodeType === 1
+}
+
 export function isFlexLayout(val: HTMLElement) {
   const style = window.getComputedStyle(val)
   return style.display === 'flex'
@@ -85,6 +89,10 @@ export function getGridTemplateColumnsLen(val: HTMLElement) {
 
 export function pxToNumber(val: string) {
   return Number.parseFloat(val)
+}
+
+export function numberToPx(val: number) {
+  return `${val}px`
 }
 
 export function widthIsFullContainer(element: HTMLElement, container: HTMLElement) {
@@ -141,6 +149,7 @@ export function calculateXLocation(beforeElement: HTMLElement, afterElement: HTM
   if (xIsInAfterElementRange) {
     const isInLeftRange = x - (afterElementLeft + afterElementWidth / 2) < 0
     return {
+      event,
       element: afterElement,
       direction: isInLeftRange ? DirectionEnum.LEFT : DirectionEnum.RIGHT,
     }
@@ -149,6 +158,7 @@ export function calculateXLocation(beforeElement: HTMLElement, afterElement: HTM
   if (xIsInBeforeElementRange) {
     const isInLeftRange = x - (beforeElementLeft + beforeElementWidth / 2) < 0
     return {
+      event,
       element: beforeElement,
       direction: isInLeftRange ? DirectionEnum.LEFT : DirectionEnum.RIGHT,
     }
@@ -159,6 +169,7 @@ export function calculateXLocation(beforeElement: HTMLElement, afterElement: HTM
   // 是否偏向beforeElement
   const isDeviationBeforeElement = Math.abs(x - beforeElementRight) - Math.abs(x - afterElementLeft) < 0
   return {
+    event,
     element: isDeviationBeforeElement ? beforeElement : afterElement,
     direction: isDeviationBeforeElement ? DirectionEnum.RIGHT : DirectionEnum.LEFT,
   }
@@ -174,6 +185,7 @@ export function calculateYLocation(beforeElement: HTMLElement, afterElement: HTM
   if (yIsInAfterElementRange) {
     const isInTopRange = y - (afterElementTop + afterElementHeight / 2) < 0
     return {
+      event,
       element: afterElement,
       direction: isInTopRange ? DirectionEnum.TOP : DirectionEnum.BOTTOM,
     }
@@ -182,6 +194,7 @@ export function calculateYLocation(beforeElement: HTMLElement, afterElement: HTM
   if (yIsInBeforeElementRange) {
     const isInToptRange = y - (beforeElementTop + beforeElementHeight / 2) < 0
     return {
+      event,
       element: beforeElement,
       direction: isInToptRange ? DirectionEnum.TOP : DirectionEnum.BOTTOM,
     }
@@ -192,6 +205,7 @@ export function calculateYLocation(beforeElement: HTMLElement, afterElement: HTM
   // 是否偏向beforeElement
   const isDeviationBeforeElement = Math.abs(y - beforeElementBottom) - Math.abs(y - afterElementTop) < 0
   return {
+    event,
     element: isDeviationBeforeElement ? beforeElement : afterElement,
     direction: isDeviationBeforeElement ? DirectionEnum.BOTTOM : DirectionEnum.TOP,
   }

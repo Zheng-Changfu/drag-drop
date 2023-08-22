@@ -2,26 +2,26 @@ import type { DragDropPluginCtx, DrapDropEventsCallback, EnhancedMouseEvent } fr
 import type { CSSProperties, VNodeChild } from 'vue'
 import { computed, ref, unref } from 'vue'
 import { getBoundingClientRect } from '@drag-drop/shared'
-import { calculateLayout, calculateXLocation, calculateYLocation, getMouseAfterElement, getMouseBeforeElement, isInThresholdRange } from './helpers'
+import { calculateLayout, calculateXLocation, calculateYLocation, getMouseAfterElement, getMouseBeforeElement, isElementNode, isInThresholdRange, numberToPx } from './helpers'
 import { type AuxiliaryLineLocation, DirectionEnum, LayoutEnum } from './types'
 
 const buildInMethods: Required<Pick<AuxiliaryLinePluginOptions, 'getElementChildrenAndContainer' | 'getTargetElementByEvent' | 'onRender'>> = {
   onRender(location, style) {
     if (!location || location.direction === DirectionEnum.IN) return null
-    return <div {...style}></div>
+    return <div style={style}></div>
   },
   getTargetElementByEvent: event => event.target!,
   getElementChildrenAndContainer: (element, inThresholdRange) => {
     if (inThresholdRange) {
       return {
         container: element,
-        children: element.childNodes as unknown as HTMLElement[],
+        children: Array.from(element.childNodes).filter(isElementNode) as HTMLElement[],
       }
     }
 
     return {
       container: element.parentElement!,
-      children: element.parentElement!.childNodes as unknown as HTMLElement[],
+      children: Array.from(element.parentElement!.childNodes).filter(isElementNode) as HTMLElement[],
     }
   },
 }
@@ -49,6 +49,7 @@ export function auxiliaryLinePlugin(options: AuxiliaryLinePluginOptions = {}) {
       getElementChildrenAndContainer = buildInMethods.getElementChildrenAndContainer,
     } = options
 
+    const dropableRef = context.useCanDropable()
     const auxiliaryLineLocationRef = ref<AuxiliaryLineLocation>()
 
     function calculateAuxiliaryLineLocation(event: EnhancedMouseEvent): AuxiliaryLineLocation {
@@ -58,6 +59,7 @@ export function auxiliaryLinePlugin(options: AuxiliaryLinePluginOptions = {}) {
 
       if (children.length <= 0) {
         return {
+          event,
           element,
           direction: DirectionEnum.IN,
         }
@@ -80,6 +82,7 @@ export function auxiliaryLinePlugin(options: AuxiliaryLinePluginOptions = {}) {
     })
 
     context.onMove((event) => {
+      if (!unref(dropableRef)) return
       const auxiliaryLineLocation = calculateAuxiliaryLineLocation(event)
       auxiliaryLineLocationRef.value = (onShowAuxiliaryLine?.(auxiliaryLineLocation, event) === false) ? undefined : auxiliaryLineLocation
       onMove?.(event)
@@ -96,22 +99,40 @@ export function auxiliaryLinePlugin(options: AuxiliaryLinePluginOptions = {}) {
         position: 'fixed',
         background: '#0071e7',
         pointerEvents: 'none',
+        zIndex: 'auto',
       }
 
       if (location && location.direction !== DirectionEnum.IN) {
-        const { direction, element } = location
-        const elementRect = getBoundingClientRect(element)
+        const { direction, element, event } = location
+        let { left, top, right, bottom, width, height } = getBoundingClientRect(element)
+
+        if (event.inIframe) {
+          const { left: offsetLeft, top: offsetTop } = getBoundingClientRect(event.iframe)
+          left += offsetLeft
+          right += offsetLeft
+          top += offsetTop
+          bottom += offsetTop
+        }
+
         const rectStyle = {
-          [DirectionEnum.LEFT]: { ...elementRect, width: auxiliaryLineSize },
-          [DirectionEnum.TOP]: { ...elementRect, height: auxiliaryLineSize },
-          [DirectionEnum.RIGHT]: { ...elementRect, width: auxiliaryLineSize, left: elementRect.right },
-          [DirectionEnum.BOTTOM]: { ...elementRect, height: auxiliaryLineSize, top: elementRect.bottom },
+          [DirectionEnum.LEFT]: { width: numberToPx(auxiliaryLineSize) },
+          [DirectionEnum.TOP]: { height: numberToPx(auxiliaryLineSize) },
+          [DirectionEnum.RIGHT]: { width: numberToPx(auxiliaryLineSize), left: numberToPx(right) },
+          [DirectionEnum.BOTTOM]: { height: numberToPx(auxiliaryLineSize), top: numberToPx(bottom) },
         }[direction]
 
-        return {
-          ...rectStyle,
+        const r = {
+          ...{
+            left: numberToPx(left),
+            top: numberToPx(top),
+            width: numberToPx(width),
+            height: numberToPx(height),
+            ...rectStyle,
+          },
           ...basicStyle,
         }
+        // console.log(r, 'r')
+        return r
       }
 
       return basicStyle

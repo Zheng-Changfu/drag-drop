@@ -1,5 +1,6 @@
-import { type MaybeRefOrGetter, computed, ref, toValue, unref } from 'vue'
-import { createEventHook, isBool, isFunc, isIframeTag, useEventListener } from '@drag-drop/shared'
+import { type MaybeRefOrGetter, computed, ref, toValue, unref, watch } from 'vue'
+import type { AnyFn } from '@drag-drop/shared'
+import { createEventHook, isBool, isFunc, isIframeTag, noop, tryOnScopeDispose, useEventListener } from '@drag-drop/shared'
 import type { DragDropPlugin, EnhancedMouseEvent, Frame, UseDragDropContext } from '../types'
 import { castEnhancedMouseEvent } from '../helpers/castEnhancedMouseEvent'
 import { use } from '../helpers/plugin'
@@ -95,8 +96,17 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContex
   useEventListener(document, 'mousemove', handleMouseMove)
   useEventListener(document, 'mouseup', handleMouseUp)
 
+  const cleanups: AnyFn[] = []
+  let watchStopHandler: AnyFn = noop
+
   if (frames) {
     frames.forEach((frame) => {
+      /**
+       * iframe加载内容有2种情况
+       * 1. 外界可能没有指定 src 属性，用的类似 render 函数直接挂载到 iframe 中,这样是触发不了 iframe 的 onload 事件的
+       * 2. 外界指定了 src 属性,需要等到 iframe 加载完成后
+       */
+
       const iframeGetter = computed(() => {
         const el = toValue(frame)
         if (isIframeTag(el)) {
@@ -108,28 +118,66 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContex
       const iframeDocumentGetter = computed(() => {
         const iframe = unref(iframeGetter)
         if (iframe) {
-          iframe.onload = function () {
-            console.log(444, iframe.contentDocument)
-            iframe.contentDocument?.addEventListener('click', () => {
-              console.log(111)
-            })
-          }
+          // iframe.onload = function () {
+          //   console.log(444, iframe.contentDocument)
+          //   iframe.contentDocument?.addEventListener('click', () => {
+          //     console.log(111)
+          //   })
+          // }
           return iframe.contentDocument
         }
         return null
       })
 
-      useEventListener(iframeGetter, 'load', () => {
-        useEventListener(iframeDocumentGetter, 'mousedown', event => handleMouseDown(event, unref(iframeGetter)!))
-        useEventListener(iframeDocumentGetter, 'mousemove', event => handleMouseMove(event, unref(iframeGetter)!))
-        useEventListener(iframeDocumentGetter, 'mouseup', event => handleMouseUp(event, unref(iframeGetter)!))
+      watchStopHandler = watch(iframeGetter, (frame) => {
+        if (!frame) return
+        const canWaitIframeLoaded = !!frame.getAttribute('src')
+        if (canWaitIframeLoaded) {
+          const loadOff = useEventListener(iframeGetter, 'load', () => {
+            const mouseDownOff = useEventListener(iframeDocumentGetter, 'mousedown', event => handleMouseDown(event, unref(iframeGetter)!))
+            const mouseMoveOff = useEventListener(iframeDocumentGetter, 'mousemove', event => handleMouseMove(event, unref(iframeGetter)!))
+            const mouseUpOff = useEventListener(iframeDocumentGetter, 'mouseup', event => handleMouseUp(event, unref(iframeGetter)!))
 
-        frameList.push({
-          iframeGetter,
-          iframeDocumentGetter,
-        })
+            frameList.push({
+              iframeGetter,
+              iframeDocumentGetter,
+            })
+
+            cleanups.push(
+              mouseDownOff,
+              mouseMoveOff,
+              mouseUpOff,
+              () => frameList.pop(),
+              loadOff,
+            )
+          })
+        }
+        else {
+          const mouseDownOff = useEventListener(iframeDocumentGetter, 'mousedown', event => handleMouseDown(event, unref(iframeGetter)!))
+          const mouseMoveOff = useEventListener(iframeDocumentGetter, 'mousemove', event => handleMouseMove(event, unref(iframeGetter)!))
+          const mouseUpOff = useEventListener(iframeDocumentGetter, 'mouseup', event => handleMouseUp(event, unref(iframeGetter)!))
+
+          frameList.push({
+            iframeGetter,
+            iframeDocumentGetter,
+          })
+
+          cleanups.push(
+            mouseDownOff,
+            mouseMoveOff,
+            mouseUpOff,
+            () => frameList.pop(),
+          )
+        }
       })
+      cleanups.push(watchStopHandler)
     })
+  }
+
+  const stop = () => {
+    cleanups.forEach(fn => fn())
+    cleanups.length = 0
+    watchStopHandler()
   }
 
   const context: UseDragDropContext = {
@@ -146,6 +194,8 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContex
       return use(context, plugin)!
     },
   }
+
+  tryOnScopeDispose(stop)
 
   return context
 }

@@ -1,3 +1,5 @@
+import type { EnhancedMouseEvent } from '@drag-drop/core'
+
 export enum DirectionEnum {
   LEFT = 'LEFT',
   RIGHT = 'RIGHT',
@@ -7,6 +9,7 @@ export enum DirectionEnum {
 }
 
 export interface AuxiliaryLineLocation {
+  event: EnhancedMouseEvent
   element: HTMLElement
   direction: `${DirectionEnum}`
 }
