@@ -14,7 +14,7 @@
 | 拖拽排序插件 | `@drag-drop/plugin-sort` | ✅ | ✅ | 
 | 低代码 `outline` 插件 | `@drag-drop/plugin-outline` | ✅ | ✅ | 
 | 自由拖拽插件 | `@drag-drop/plugin-draggable` | ✅ | ❌ | 
-| 低代码流式布局`辅助线`插件 | `@drag-drop/plugin-auxiliaryLine` |✅ | ❌ | 
+| 低代码流式布局`辅助线`插件 | `@drag-drop/plugin-auxiliaryLine` |✅ | ✅ | 
 | 低代码自由布局`标尺线`插件 | `@drag-drop/plugin-rulerLine` | ✅ | ❌ | 
 
 ## 如何使用
