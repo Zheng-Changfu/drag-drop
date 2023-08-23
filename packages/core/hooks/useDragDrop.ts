@@ -4,6 +4,7 @@ import { createEventHook, isIframeTag, noop, tryOnScopeDispose, useEventListener
 import type { DragDropPlugin, EnhancedMouseEvent, Frame, UseDragDropContext } from '../types'
 import { castEnhancedMouseEvent } from '../helpers/castEnhancedMouseEvent'
 import { use } from '../helpers/plugin'
+import { Scope } from './scope'
 
 interface UseDragDropOptions {
   frames?: Array<MaybeRefOrGetter<HTMLIFrameElement | undefined>>
@@ -12,7 +13,7 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContex
   const {
     frames,
   } = options
-
+  const scope = new Scope()
   const frameList: Frame[] = []
   const isDraggingRef = ref(false)
 
@@ -22,6 +23,7 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContex
   const { on: onDragging, trigger: dispatchDraggingEvent } = createEventHook<EnhancedMouseEvent>()
 
   function handleMouseDown(event: MouseEvent, iframe?: HTMLIFrameElement) {
+    if (!scope.active) return
     const evt = castEnhancedMouseEvent(event, iframe)
     isDraggingRef.value = true
     dispatchStartEvent(evt)
@@ -29,6 +31,7 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContex
   }
 
   function handleMouseMove(event: MouseEvent, iframe?: HTMLIFrameElement) {
+    if (!scope.active) return
     if (!unref(isDraggingRef)) return
     const evt = castEnhancedMouseEvent(event, iframe)
     dispatchMoveEvent(evt)
@@ -36,6 +39,7 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContex
   }
 
   function handleMouseUp(event: MouseEvent, iframe?: HTMLIFrameElement) {
+    if (!scope.active) return
     if (!unref(isDraggingRef)) return
     const evt = castEnhancedMouseEvent(event, iframe)
     isDraggingRef.value = false
@@ -152,6 +156,12 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContex
     castEnhancedMouseEvent,
     use(plugin: DragDropPlugin) {
       return use(context, plugin)!
+    },
+    pause() {
+      return scope.pause()
+    },
+    resume() {
+      return scope.resume()
     },
   }
 

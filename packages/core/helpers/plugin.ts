@@ -103,6 +103,7 @@ function createPluginRootElement() {
       zIndex: 'auto',
     },
   })
+
   render(vnode, document.body)
   pluginRootEl = vnode.el as any
   return pluginRootEl

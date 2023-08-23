@@ -13,7 +13,7 @@ interface TriggerFn {
 }
 
 function buildInRender(rect: Rect, style: CSSProperties) {
-  return <div style={{
+  return <div class="aaaa" style={{
     ...style,
     outline: 'solid 1px #388bfe',
     background: 'rgba(0, 0, 0, 0.1)',
@@ -120,6 +120,7 @@ export function outlinePlugin(options: OutlinePluginOptions = {}) {
 
     if (hoverEnable) {
       function mouseMoveHandler(event: MouseEvent) {
+        if (unref(isDraggingRef)) return
         const evt = context.castEnhancedMouseEvent(event)
         trigger(evt.x, evt.y)
       }
@@ -165,7 +166,7 @@ export function outlinePlugin(options: OutlinePluginOptions = {}) {
         height: `${height}px`,
         pointerEvents: 'none',
         zIndex: 'auto',
-        transition: 'width 0.1s ease-in,height 0.1s ease-in,left 0.1s ease-in,top 0.1s ease-in',
+        transition: 'all 0.1s ease-in',
       })
     }
   }

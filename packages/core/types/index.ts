@@ -42,6 +42,8 @@ export interface DrapDropEventsCallback {
 export interface UseDragDropContext {
   use: (plugin: DragDropPlugin) => UseReturn
   useDragging: () => Ref<boolean>
+  pause: () => void
+  resume: () => void
   useFrameList: () => Frame[]
   onEnd: (fn: DrapDropEventsCallback['onEnd']) => EventReturn
   onMove: (fn: DrapDropEventsCallback['onMove']) => EventReturn

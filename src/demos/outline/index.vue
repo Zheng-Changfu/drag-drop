@@ -2,6 +2,7 @@
 import { useDragDrop } from '@drag-drop/core'
 import type { OutlinePluginExposed } from '@drag-drop/plugin-outline'
 import { outlinePlugin } from '@drag-drop/plugin-outline'
+import { useEventListener } from '@drag-drop/shared'
 
 const context = useDragDrop()
 const { exposed } = context.use(outlinePlugin({
@@ -19,11 +20,14 @@ function random(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
-function handleTriggerOutLine() {
+function handleTriggerOutLine(e: Event) {
+  context.pause()
   const id = random(1, 6)
   const element = document.getElementById(`${id}`)
   element && trigger(element)
 }
+
+useEventListener('transitionend', () => context.resume())
 </script>
 
 <template>
