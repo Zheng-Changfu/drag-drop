@@ -59,5 +59,6 @@ export type DragDropPlugin = (ctx: DragDropPluginCtx) => any
 
 export interface Frame {
   iframeGetter: ComputedRef<HTMLIFrameElement | null>
+  iframeWindowGetter: ComputedRef<Window | null>
   iframeDocumentGetter: ComputedRef<Document | null>
 }

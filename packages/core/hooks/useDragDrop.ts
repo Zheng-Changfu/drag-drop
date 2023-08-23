@@ -73,6 +73,14 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContex
         return null
       })
 
+      const iframeWindowGetter = computed(() => {
+        const iframe = unref(iframeGetter)
+        if (iframe) {
+          return iframe.contentWindow
+        }
+        return null
+      })
+
       const iframeDocumentGetter = computed(() => {
         const iframe = unref(iframeGetter)
         if (iframe) {
@@ -92,6 +100,7 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContex
 
             frameList.push({
               iframeGetter,
+              iframeWindowGetter,
               iframeDocumentGetter,
             })
 
@@ -111,6 +120,7 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropContex
 
           frameList.push({
             iframeGetter,
+            iframeWindowGetter,
             iframeDocumentGetter,
           })
 

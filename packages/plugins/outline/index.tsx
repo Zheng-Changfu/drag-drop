@@ -1,10 +1,10 @@
 import type { DragDropPluginCtx, DrapDropEventsCallback, MaybeBoolOrFunc } from '@drag-drop/core'
 import type { AnyFn } from '@drag-drop/shared'
-import { getBoundingClientRect, isBool, isFunc, isHtmlElement, isNumber, noop } from '@drag-drop/shared'
+import { getBoundingClientRect, isBool, isFunc, isHtmlElement, isNumber, noop, useEventListener } from '@drag-drop/shared'
 import type { CSSProperties, VNodeChild } from 'vue'
 import { onScopeDispose, ref, unref, watch } from 'vue'
 
-type BoundingRect = Omit<DOMRect, 'toJSON'>
+type Rect = Omit<DOMRect, 'toJSON'> & { element: HTMLElement }
 
 interface TriggerFn {
   (hide: false): void
@@ -12,19 +12,22 @@ interface TriggerFn {
   (element: HTMLElement): void
 }
 
-function buildInRender(rect: BoundingRect, style: CSSProperties) {
+function buildInRender(rect: Rect, style: CSSProperties) {
   return <div style={{
     ...style,
-    outline: 'dashed 1px #0071e7',
+    outline: 'solid 1px #388bfe',
     background: 'rgba(0, 0, 0, 0.1)',
   }}></div>
 }
 
 interface OutlinePluginOptions {
+  hoverEnable?: boolean
   draggingEnable?: boolean
-  onRender?: (rect: BoundingRect) => VNodeChild
+  resizeCorrected?: boolean
+  scrollCorrected?: boolean
+  onRender?: (rect: Rect) => VNodeChild
   onDragging?: DrapDropEventsCallback['onDragging']
-  showOutline?: MaybeBoolOrFunc<(rect: BoundingRect) => boolean>
+  showOutline?: MaybeBoolOrFunc<(rect: Rect) => boolean>
 }
 
 export function outlinePlugin(options: OutlinePluginOptions = {}) {
@@ -32,15 +35,19 @@ export function outlinePlugin(options: OutlinePluginOptions = {}) {
     const {
       onDragging,
       showOutline = true,
+      hoverEnable = true,
       draggingEnable = true,
+      resizeCorrected = true,
+      scrollCorrected = true,
       onRender = buildInRender,
     } = options
 
+    const rectRef = ref<Rect>()
+    const frameList = context.useFrameList()
     const isDraggingRef = context.useDragging()
-    const boundingRectRef = ref<BoundingRect>()
 
     function getCanShowOutline() {
-      const rect = unref(boundingRectRef)
+      const rect = unref(rectRef)
       if (!rect) {
         return false
       }
@@ -56,7 +63,7 @@ export function outlinePlugin(options: OutlinePluginOptions = {}) {
     const trigger: TriggerFn = (val: number | HTMLElement | false, y?: number) => {
       if (isBool(val)) {
         // hide
-        boundingRectRef.value = undefined
+        rectRef.value = undefined
         return
       }
 
@@ -78,11 +85,22 @@ export function outlinePlugin(options: OutlinePluginOptions = {}) {
       }
 
       if (!el) {
-        boundingRectRef.value = undefined
+        rectRef.value = undefined
         return
       }
 
-      boundingRectRef.value = getBoundingClientRect(el)
+      const { x, y: _y, width, height, left, right, top, bottom } = getBoundingClientRect(el)
+      rectRef.value = {
+        x,
+        y: _y,
+        width,
+        height,
+        left,
+        right,
+        top,
+        bottom,
+        element: el,
+      }
     }
 
     let stop = noop as AnyFn
@@ -100,20 +118,46 @@ export function outlinePlugin(options: OutlinePluginOptions = {}) {
       })
     }
 
+    if (hoverEnable) {
+      function mouseMoveHandler(event: MouseEvent) {
+        const evt = context.castEnhancedMouseEvent(event)
+        trigger(evt.x, evt.y)
+      }
+
+      useEventListener(document, 'mousemove', mouseMoveHandler)
+      frameList.forEach(({ iframeDocumentGetter }) => useEventListener(iframeDocumentGetter, 'mousemove', mouseMoveHandler))
+    }
+
+    function correctionRect() {
+      const rect = unref(rectRef)
+      if (!rect) return
+      trigger(rect.element)
+    }
+
+    if (resizeCorrected) {
+      useEventListener(window, 'resize', correctionRect)
+      frameList.forEach(({ iframeWindowGetter }) => useEventListener(iframeWindowGetter, 'resize', correctionRect))
+    }
+
+    if (scrollCorrected) {
+      useEventListener(document, 'scroll', correctionRect)
+      frameList.forEach(({ iframeDocumentGetter }) => useEventListener(iframeDocumentGetter, 'scroll', correctionRect))
+    }
+
     onScopeDispose(stop)
     expose({ trigger })
 
     return () => {
-      const boundingRect = unref(boundingRectRef)
+      const rect = unref(rectRef)
       const showOutline = getCanShowOutline()
 
-      if (!boundingRect || !showOutline) {
+      if (!rect || !showOutline) {
         return null
       }
 
-      const { left, top, width, height } = boundingRect
+      const { left, top, width, height } = rect
 
-      return onRender(boundingRect, {
+      return onRender(rect, {
         position: 'fixed',
         left: `${left}px`,
         top: `${top}px`,

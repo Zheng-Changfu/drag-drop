@@ -44,6 +44,12 @@ function handleTriggerOutLine() {
     <div id="6" class="item" style="--color:orange">
       h5
     </div>
+    <div id="7" class="item" style="--color:orange">
+      h5
+    </div>
+    <div id="8" class="item" style="--color:orange">
+      h5
+    </div>
   </div>
   <button @click="handleTriggerOutLine">
     手柄
