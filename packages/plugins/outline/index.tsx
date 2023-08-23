@@ -1,15 +1,10 @@
-import type { CanDropableFn, DragDropPluginCtx, DrapDropEventsCallback } from '@drag-drop/core'
+import type { DragDropPluginCtx, DrapDropEventsCallback, MaybeBoolOrFunc } from '@drag-drop/core'
 import type { AnyFn } from '@drag-drop/shared'
-import { getBoundingClientRect, isBool, isHtmlElement, isNumber, noop } from '@drag-drop/shared'
-import { onScopeDispose, ref, toValue, unref, watch } from 'vue'
-import type { CSSProperties, MaybeRefOrGetter } from 'vue'
+import { getBoundingClientRect, isBool, isFunc, isHtmlElement, isNumber, noop } from '@drag-drop/shared'
+import type { CSSProperties, VNodeChild } from 'vue'
+import { computed, onScopeDispose, ref, unref, watch } from 'vue'
 
-interface BoundingRect {
-  left: number
-  top: number
-  width: number
-  height: number
-}
+type BoundingRect = Omit<DOMRect, 'toJSON'>
 
 interface TriggerFn {
   (hide: false): void
@@ -17,38 +12,47 @@ interface TriggerFn {
   (element: HTMLElement): void
 }
 
+function buildInRender(rect: BoundingRect, style: CSSProperties) {
+  return <div style={{
+    ...style,
+    outline: 'dashed 1px #0071e7',
+    background: 'rgba(0, 0, 0, 0.1)',
+  }}></div>
+}
+
 interface OutlinePluginOptions {
   draggingEnable?: boolean
-  canDropable?: CanDropableFn
-  style?: MaybeRefOrGetter<CSSProperties>
+  onRender?: (rect: BoundingRect) => VNodeChild
   onDragging?: DrapDropEventsCallback['onDragging']
+  showOutline?: MaybeBoolOrFunc<(rect: BoundingRect) => boolean>
 }
 
 export function outlinePlugin(options: OutlinePluginOptions = {}) {
   return function ({ context, expose }: DragDropPluginCtx) {
     const {
-      style = {},
       onDragging,
-      canDropable,
+      showOutline = true,
       draggingEnable = true,
+      onRender = buildInRender,
     } = options
 
+    const isDraggingRef = context.useDragging()
     const boundingRectRef = ref<BoundingRect>()
-    const canDropableRef = context.useCanDropable(canDropable)
 
-    function updateBoundingRect(val?: BoundingRect) {
-      boundingRectRef.value = val
-    }
+    const showOutlineGetter = computed(() => {
+      if (isBool(showOutline)) {
+        return showOutline
+      }
+      if (isFunc(showOutline)) {
+        return showOutline(unref(boundingRectRef)!)
+      }
+      return true
+    })
 
     const trigger: TriggerFn = (val: number | HTMLElement | false, y?: number) => {
-      if (!unref(canDropableRef)) {
-        updateBoundingRect()
-        return
-      }
-
       if (isBool(val)) {
         // hide
-        updateBoundingRect()
+        boundingRectRef.value = undefined
         return
       }
 
@@ -70,11 +74,11 @@ export function outlinePlugin(options: OutlinePluginOptions = {}) {
       }
 
       if (!el) {
-        updateBoundingRect()
+        boundingRectRef.value = undefined
         return
       }
 
-      updateBoundingRect(getBoundingClientRect(el))
+      boundingRectRef.value = getBoundingClientRect(el)
     }
 
     let stop = noop as AnyFn
@@ -84,7 +88,8 @@ export function outlinePlugin(options: OutlinePluginOptions = {}) {
         trigger(event.x, event.y)
         onDragging?.(event)
       })
-      stop = watch(context.useDragging(), (isDragging) => {
+
+      stop = watch(isDraggingRef, (isDragging) => {
         if (isDragging === false) {
           trigger(false)
         }
@@ -96,25 +101,27 @@ export function outlinePlugin(options: OutlinePluginOptions = {}) {
 
     return () => {
       const boundingRect = unref(boundingRectRef)
+
       if (!boundingRect) {
         return null
       }
+
+      if (!unref(showOutlineGetter)) {
+        return null
+      }
+
       const { left, top, width, height } = boundingRect
 
-      return <div
-       style={{
-         position: 'fixed',
-         left: `${left}px`,
-         top: `${top}px`,
-         width: `${width}px`,
-         height: `${height}px`,
-         pointerEvents: 'none',
-         zIndex: 'auto',
-         transition: 'width 0.1s ease-in,height 0.1s ease-in,left 0.1s ease-in,top 0.1s ease-in',
-         outline: 'dashed 1px #0071e7',
-         background: 'rgba(0, 0, 0, 0.1)',
-         ...toValue(style),
-       }}></div>
+      return onRender(boundingRect, {
+        position: 'fixed',
+        left: `${left}px`,
+        top: `${top}px`,
+        width: `${width}px`,
+        height: `${height}px`,
+        pointerEvents: 'none',
+        zIndex: 'auto',
+        transition: 'width 0.1s ease-in,height 0.1s ease-in,left 0.1s ease-in,top 0.1s ease-in',
+      })
     }
   }
 }

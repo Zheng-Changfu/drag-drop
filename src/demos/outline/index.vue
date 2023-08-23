@@ -1,18 +1,18 @@
 <script setup lang="tsx">
-import type { EnhancedMouseEvent } from '@drag-drop/core'
 import { useDragDrop } from '@drag-drop/core'
 import type { OutlinePluginExposed } from '@drag-drop/plugin-outline'
 import { outlinePlugin } from '@drag-drop/plugin-outline'
-import type { CSSProperties } from 'vue'
 
-const style: CSSProperties = { userSelect: 'none' }
-function canDropable(event: EnhancedMouseEvent) {
-  const target = event.target
-  return !!target?.classList.contains('item') || !!target?.classList.contains('container')
-}
-
-const context = useDragDrop({ canDropable })
-const { exposed } = context.use(outlinePlugin({ canDropable: false }))
+const context = useDragDrop()
+const { exposed } = context.use(outlinePlugin({
+  showOutline(rect) {
+    const element = document.elementFromPoint(rect.x, rect.y)
+    if (!element) {
+      return false
+    }
+    return element.classList.contains('item') || element.classList.contains('container')
+  },
+}))
 const { trigger } = exposed as OutlinePluginExposed
 
 function random(min: number, max: number) {
@@ -29,19 +29,19 @@ function handleTriggerOutLine() {
 <template>
   <h1>拖拽 | 点击手柄</h1>
   <div id="1" class="container">
-    <div id="2" class="item" :style="style" style="--color:red">
+    <div id="2" class="item" style="--color:red">
       h1
     </div>
-    <div id="3" class="item" :style="style" style="--color:pink">
+    <div id="3" class="item" style="--color:pink">
       h2
     </div>
-    <div id="4" class="item" :style="style" style="--color:skyblue">
+    <div id="4" class="item" style="--color:skyblue">
       h3
     </div>
-    <div id="5" class="item" :style="style" style="--color:yellow">
+    <div id="5" class="item" style="--color:yellow">
       h4
     </div>
-    <div id="6" class="item" :style="style" style="--color:orange">
+    <div id="6" class="item" style="--color:orange">
       h5
     </div>
   </div>
@@ -54,6 +54,7 @@ function handleTriggerOutLine() {
 .container{
   display: flex;
   gap:8px;
+  user-select: none;
 }
 
 .item{
