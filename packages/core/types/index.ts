@@ -1,6 +1,8 @@
+import type { AnyFn } from '@drag-drop/shared'
 import type { ComputedRef, Ref } from 'vue'
 
 export type NullUndefinedAble<T> = T | null | undefined
+export type MaybeBoolOrFunc<T extends AnyFn> = boolean | T
 
 export interface EnhancedMouseEvent {
   x: number
@@ -40,8 +42,6 @@ export interface DrapDropEventsCallback {
 export interface UseDragDropContext {
   use: (plugin: DragDropPlugin) => UseReturn
   useDragging: () => Ref<boolean>
-  useCanDropable: () => Ref<boolean>
-  useCanDraggable: () => Ref<boolean>
   useFrameList: () => Frame[]
   onEnd: (fn: DrapDropEventsCallback['onEnd']) => EventReturn
   onMove: (fn: DrapDropEventsCallback['onMove']) => EventReturn

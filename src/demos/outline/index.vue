@@ -12,7 +12,7 @@ function canDropable(event: EnhancedMouseEvent) {
 }
 
 const context = useDragDrop({ canDropable })
-const { exposed } = context.use(outlinePlugin())
+const { exposed } = context.use(outlinePlugin({ canDropable: false }))
 const { trigger } = exposed as OutlinePluginExposed
 
 function random(min: number, max: number) {
