@@ -1,7 +1,7 @@
-import type { DragDropPluginCtx, DrapDropEventsCallback, EnhancedMouseEvent } from '@drag-drop/core'
+import type { DragDropPluginCtx, DrapDropEventsCallback, EnhancedMouseEvent, MaybeBoolOrFunc } from '@drag-drop/core'
 import type { CSSProperties, VNodeChild } from 'vue'
 import { computed, ref, unref } from 'vue'
-import { getBoundingClientRect } from '@drag-drop/shared'
+import { getBoundingClientRect, isBool, isFunc } from '@drag-drop/shared'
 import { calculateLayout, calculateXLocation, calculateYLocation, getMouseAfterElement, getMouseBeforeElement, isElementNode, isInThresholdRange, numberToPx } from './helpers'
 import { type AuxiliaryLineLocation, DirectionEnum, LayoutEnum } from './types'
 
@@ -26,12 +26,15 @@ const buildInMethods: Required<Pick<AuxiliaryLinePluginOptions, 'getElementChild
   },
 }
 
-interface AuxiliaryLinePluginOptions extends Partial<Omit<DrapDropEventsCallback, 'onDragging'>> {
+interface AuxiliaryLinePluginOptions {
   thresholdSize?: number
   auxiliaryLineSize?: number
+  onEnd?: DrapDropEventsCallback['onEnd']
+  onMove?: DrapDropEventsCallback['onMove']
+  onStart?: DrapDropEventsCallback['onStart']
   getTargetElementByEvent?: (event: EnhancedMouseEvent) => HTMLElement
+  showAuxiliaryLine?: MaybeBoolOrFunc<(event: EnhancedMouseEvent) => boolean>
   onRender?: (location: AuxiliaryLineLocation | undefined, style: Record<string, any>) => VNodeChild
-  onShowAuxiliaryLine?: (location: AuxiliaryLineLocation, event: EnhancedMouseEvent) => boolean
   getElementChildrenAndContainer?: (element: HTMLElement, inThresholdRange: boolean) => { children: HTMLElement[]; container: HTMLElement }
 }
 
@@ -42,15 +45,20 @@ export function auxiliaryLinePlugin(options: AuxiliaryLinePluginOptions = {}) {
       onMove,
       onStart,
       thresholdSize = 8,
-      onShowAuxiliaryLine,
       auxiliaryLineSize = 2,
+      showAuxiliaryLine = true,
       onRender = buildInMethods.onRender,
       getTargetElementByEvent = buildInMethods.getTargetElementByEvent,
       getElementChildrenAndContainer = buildInMethods.getElementChildrenAndContainer,
     } = options
 
-    const dropableRef = context.useCanDropable()
     const auxiliaryLineLocationRef = ref<AuxiliaryLineLocation>()
+
+    function getShowAuxiliaryLine(event: EnhancedMouseEvent) {
+      if (isBool(showAuxiliaryLine)) return showAuxiliaryLine
+      if (isFunc(showAuxiliaryLine)) return showAuxiliaryLine(event)
+      return true
+    }
 
     function calculateAuxiliaryLineLocation(event: EnhancedMouseEvent): AuxiliaryLineLocation {
       const element = getTargetElementByEvent(event)
@@ -82,9 +90,9 @@ export function auxiliaryLinePlugin(options: AuxiliaryLinePluginOptions = {}) {
     })
 
     context.onMove((event) => {
-      if (!unref(dropableRef)) return
+      if (!getShowAuxiliaryLine(event)) return
       const auxiliaryLineLocation = calculateAuxiliaryLineLocation(event)
-      auxiliaryLineLocationRef.value = (onShowAuxiliaryLine?.(auxiliaryLineLocation, event) === false) ? undefined : auxiliaryLineLocation
+      auxiliaryLineLocationRef.value = auxiliaryLineLocation
       onMove?.(event)
     })
 
@@ -121,7 +129,7 @@ export function auxiliaryLinePlugin(options: AuxiliaryLinePluginOptions = {}) {
           [DirectionEnum.BOTTOM]: { height: numberToPx(auxiliaryLineSize), top: numberToPx(bottom) },
         }[direction]
 
-        const r = {
+        return {
           ...{
             left: numberToPx(left),
             top: numberToPx(top),
@@ -131,8 +139,6 @@ export function auxiliaryLinePlugin(options: AuxiliaryLinePluginOptions = {}) {
           },
           ...basicStyle,
         }
-        // console.log(r, 'r')
-        return r
       }
 
       return basicStyle

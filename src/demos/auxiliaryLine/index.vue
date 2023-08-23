@@ -8,8 +8,6 @@ import { IframeContainer } from '../../IframeContainer'
 const iframeInstRef = ref()
 const iframeElRef = ref()
 const context = useDragDrop({
-  canDraggable: event => !!event.target?.classList.contains('materiel-item'),
-  canDropable: event => !!event.target?.classList.contains('node'),
   frames: [
     computed(() => iframeInstRef.value?.$el),
     iframeElRef,
@@ -17,9 +15,11 @@ const context = useDragDrop({
 })
 
 context.use(mouseFollowPlugin({
-  text: event => event?.target?.textContent ?? '',
+  canDraggable: event => !!event.target?.classList.contains('materiel-item') || !!event.target?.classList.contains('node'),
 }))
-context.use(auxiliaryLinePlugin())
+context.use(auxiliaryLinePlugin({
+  showAuxiliaryLine: event => !!event.target?.classList.contains('node'),
+}))
 </script>
 
 <template>
