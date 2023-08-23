@@ -2,7 +2,7 @@ import type { DragDropPluginCtx, DrapDropEventsCallback, MaybeBoolOrFunc } from 
 import type { AnyFn } from '@drag-drop/shared'
 import { getBoundingClientRect, isBool, isFunc, isHtmlElement, isNumber, noop } from '@drag-drop/shared'
 import type { CSSProperties, VNodeChild } from 'vue'
-import { computed, onScopeDispose, ref, unref, watch } from 'vue'
+import { onScopeDispose, ref, unref, watch } from 'vue'
 
 type BoundingRect = Omit<DOMRect, 'toJSON'>
 
@@ -39,15 +39,19 @@ export function outlinePlugin(options: OutlinePluginOptions = {}) {
     const isDraggingRef = context.useDragging()
     const boundingRectRef = ref<BoundingRect>()
 
-    const showOutlineGetter = computed(() => {
+    function getCanShowOutline() {
+      const rect = unref(boundingRectRef)
+      if (!rect) {
+        return false
+      }
       if (isBool(showOutline)) {
         return showOutline
       }
       if (isFunc(showOutline)) {
-        return showOutline(unref(boundingRectRef)!)
+        return showOutline(rect)
       }
       return true
-    })
+    }
 
     const trigger: TriggerFn = (val: number | HTMLElement | false, y?: number) => {
       if (isBool(val)) {
@@ -101,12 +105,9 @@ export function outlinePlugin(options: OutlinePluginOptions = {}) {
 
     return () => {
       const boundingRect = unref(boundingRectRef)
+      const showOutline = getCanShowOutline()
 
-      if (!boundingRect) {
-        return null
-      }
-
-      if (!unref(showOutlineGetter)) {
+      if (!boundingRect || !showOutline) {
         return null
       }
 

@@ -68,8 +68,11 @@ function nodeProps(info: { option: TreeOption }) {
   }
 }
 
-const context = useDragDrop({
-  canDraggable: (event) => {
+const context = useDragDrop()
+
+const { pause, resume } = context.use(sortPlugin({
+  sort,
+  canDraggable(event) {
     // 只允许叶子节点拖拽，因为跨层级拖拽的交互不知道页面如何呈现，大家可以按需根据自己业务需求实现跨层级拖拽
     const target = event.target
     if (!target) return false
@@ -79,10 +82,6 @@ const context = useDragDrop({
     const pid = parentElement.getAttribute('pid')
     return !!(uid && pid)
   },
-})
-
-const { pause, resume } = context.use(sortPlugin({
-  swap,
 }))
 
 function getUidAndPidByEvent(event: EnhancedMouseEvent) {
@@ -104,7 +103,7 @@ function getNodeIndexInParent(node: TreeItem, parentNode: TreeItem) {
   return children.findIndex(item => item.id === node.id)
 }
 
-function swap(startEvent: EnhancedMouseEvent, moveEvent: EnhancedMouseEvent) {
+function sort(startEvent: EnhancedMouseEvent, moveEvent: EnhancedMouseEvent) {
   const startNodeUidAndPid = getUidAndPidByEvent(startEvent)
   const targetNodeUidAndPid = getUidAndPidByEvent(moveEvent)
   if (!startNodeUidAndPid || !targetNodeUidAndPid) return

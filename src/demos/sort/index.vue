@@ -42,12 +42,11 @@ function tryUpdateColor(event: EnhancedMouseEvent, color: string) {
   }
 }
 
-const context = useDragDrop({
-  canDraggable,
-})
+const context = useDragDrop()
 
 const { pause, resume } = context.use(sortPlugin({
-  swap,
+  sort,
+  canDraggable,
   onStart: event => tryUpdateColor(event, swapBackgroundColor),
 }))
 
@@ -57,7 +56,7 @@ function getIndex(event: EnhancedMouseEvent) {
   return unref(id2IndexByListGetter).get(id as any) ?? -1
 }
 
-function swap(startEvent: EnhancedMouseEvent, moveEvent: EnhancedMouseEvent) {
+function sort(startEvent: EnhancedMouseEvent, moveEvent: EnhancedMouseEvent) {
   const startIndex = getIndex(startEvent)
   const targetIndex = getIndex(moveEvent)
 

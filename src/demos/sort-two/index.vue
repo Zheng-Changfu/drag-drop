@@ -75,12 +75,11 @@ function resetColor() {
   }
 }
 
-const context = useDragDrop({
-  canDraggable,
-})
+const context = useDragDrop()
 
 const { pause, resume } = context.use(sortPlugin({
-  swap,
+  sort,
+  canDraggable,
   onStart: event => tryUpdateColor(event, swapBackgroundColor),
 }))
 
@@ -105,7 +104,7 @@ function getIndexAndListByEvent(event: EnhancedMouseEvent) {
   }
 }
 
-async function swap(startEvent: EnhancedMouseEvent, moveEvent: EnhancedMouseEvent) {
+async function sort(startEvent: EnhancedMouseEvent, moveEvent: EnhancedMouseEvent) {
   const startIndexAndList = getIndexAndListByEvent(startEvent)
   const targetIndexAndList = getIndexAndListByEvent(moveEvent)
   if (!startIndexAndList || !targetIndexAndList) return
